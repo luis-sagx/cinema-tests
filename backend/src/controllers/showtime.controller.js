@@ -19,45 +19,57 @@ exports.createShowtime = async (req, res) => {
       return res.status(400).json({ message: 'Room does not exist' });
     }
 
-    // Validar que start_time es futura
-    if (new Date(start_time) <= new Date()) {
-      return res.status(400).json({ message: 'Start time must be in the future' });
+    // Normalizar fechas al inicio y fin del día (sin horas ni minutos)
+    const startDate = new Date(start_time);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(end_time);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Validar que start_date es futura o actual
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (startDate < today) {
+      return res.status(400).json({ message: 'Start date must be today or in the future' });
     }
 
-    // Validar que end_time es mayor que start_time
-    if (new Date(end_time) <= new Date(start_time)) {
-      return res.status(400).json({ message: 'End time must be greater than start time' });
+    // Validar que end_date es mayor o igual que start_date
+    if (endDate < startDate) {
+      return res.status(400).json({ message: 'End date must be greater than or equal to start date' });
     }
 
-    // Validar solapamiento
+    // Validar solapamiento de días en la misma sala
     const overlap = await Showtime.findOne({
       room_id: room_id,
       $or: [
         // Caso 1: El nuevo showtime empieza durante uno existente
         {
-          start_time: { $lte: new Date(start_time) },
-          end_time: { $gt: new Date(start_time) }
+          start_time: { $lte: startDate },
+          end_time: { $gte: startDate }
         },
         // Caso 2: El nuevo showtime termina durante uno existente
         {
-          start_time: { $lt: new Date(end_time) },
-          end_time: { $gte: new Date(end_time) }
+          start_time: { $lte: endDate },
+          end_time: { $gte: endDate }
         },
         // Caso 3: El nuevo showtime contiene completamente uno existente
         {
-          start_time: { $gte: new Date(start_time) },
-          end_time: { $lte: new Date(end_time) }
+          start_time: { $gte: startDate },
+          end_time: { $lte: endDate }
         }
       ]
     });
 
     if (overlap) {
-      return res.status(400).json({ message: 'There is an overlapping showtime in this room' });
+      return res.status(400).json({ message: 'There is an overlapping showtime in this room for these dates' });
     }
 
-    // Crear el showtime con el user_id del usuario autenticado
+    // Crear el showtime con el user_id del usuario autenticado y fechas normalizadas
     const showtimeData = {
-      ...req.body,
+      movie_id,
+      room_id,
+      start_time: startDate,
+      end_time: endDate,
       user_id: req.userId // ID del usuario autenticado
     };
     const showtime = new Showtime(showtimeData);
@@ -122,17 +134,28 @@ exports.updateShowtime = async (req, res) => {
       }
     }
 
-    // Validar start_time si se proporciona
-    if (start_time && new Date(start_time) <= new Date()) {
-      return res.status(400).json({ message: 'Start time must be in the future' });
+    // Validar start_time si se proporciona - normalizar al inicio del día
+    let newStartTime = showtime.start_time;
+    if (start_time) {
+      newStartTime = new Date(start_time);
+      newStartTime.setHours(0, 0, 0, 0);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (newStartTime < today) {
+        return res.status(400).json({ message: 'Start date must be today or in the future' });
+      }
     }
 
-    // Validar end_time vs start_time
-    const newStartTime = start_time ? new Date(start_time) : showtime.start_time;
-    const newEndTime = end_time ? new Date(end_time) : showtime.end_time;
+    // Validar end_time vs start_time - normalizar al fin del día
+    let newEndTime = showtime.end_time;
+    if (end_time) {
+      newEndTime = new Date(end_time);
+      newEndTime.setHours(23, 59, 59, 999);
+    }
 
-    if (newEndTime <= newStartTime) {
-      return res.status(400).json({ message: 'End time must be greater than start time' });
+    if (newEndTime < newStartTime) {
+      return res.status(400).json({ message: 'End date must be greater than or equal to start date' });
     }
 
     // Validar solapamiento (excluyendo el showtime actual)
@@ -143,10 +166,10 @@ exports.updateShowtime = async (req, res) => {
       $or: [
         {
           start_time: { $lte: newStartTime },
-          end_time: { $gt: newStartTime }
+          end_time: { $gte: newStartTime }
         },
         {
-          start_time: { $lt: newEndTime },
+          start_time: { $lte: newEndTime },
           end_time: { $gte: newEndTime }
         },
         {
@@ -157,11 +180,15 @@ exports.updateShowtime = async (req, res) => {
     });
 
     if (overlap) {
-      return res.status(400).json({ message: 'There is an overlapping showtime in this room' });
+      return res.status(400).json({ message: 'There is an overlapping showtime in this room for these dates' });
     }
 
-    // Actualizar los campos
-    Object.assign(showtime, req.body);
+    // Actualizar los campos con fechas normalizadas
+    if (movie_id) showtime.movie_id = movie_id;
+    if (room_id) showtime.room_id = room_id;
+    if (start_time) showtime.start_time = newStartTime;
+    if (end_time) showtime.end_time = newEndTime;
+
     await showtime.save();
 
     res.json(showtime);

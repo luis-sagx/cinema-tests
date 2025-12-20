@@ -9,7 +9,7 @@ async function createRoom(req, res) {
     if (!name) {
       return res.status(400).json({ message: 'Name is required' });
     }
-    if (capacity === null){
+    if (capacity === null) {
       return res.status(400).json({ message: 'Capacity is required' });
     }
     if (!type) {
@@ -28,7 +28,7 @@ async function createRoom(req, res) {
         .json({ message: 'Invalid type, must be 2D, 3D or VIP' });
     }
 
-    const room = await Room.create({ name, capacity, type });
+    const room = await Room.create({ name, capacity, type, user_id: req.userId });
     res.status(201).json(room);
   } catch (error) {
     if (error.code === 11000) {
@@ -79,8 +79,8 @@ async function updateRoom(req, res) {
     }
 
     const room = await Room.findByIdAndUpdate(
-      id, 
-      { name, capacity, type }, 
+      id,
+      { name, capacity, type },
       { new: true, runValidators: true }
     );
     if (!room) {

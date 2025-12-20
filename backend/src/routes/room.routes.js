@@ -1,26 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const {
-    createRoom, 
-    getRooms, 
-    getRoomById, 
-    updateRoom, 
+    createRoom,
+    getRooms,
+    getRoomById,
+    updateRoom,
     deleteRoom
 } = require('../controllers/room.controller');
+const authMiddleware = require('../middleware/auth.middleware');
 
-// Ruta POST para crear un nuevo usuario
-router.post('/', createRoom);
-
-// Ruta GET para obtener todos las sala
-router.get('/', getRooms);
-
-// Ruta GET para obtener una sala por ID
-router.get('/:id', getRoomById);
-
-// Ruta PUT para actualizar una sala por ID
-router.put('/:id', updateRoom);
-
-// Ruta DELETE para eliminar una sala por ID
-router.delete('/:id', deleteRoom);
+// Todas las rutas requieren autenticación (el user es administrador)
+router.post('/', authMiddleware, createRoom);
+router.get('/', authMiddleware, getRooms);
+router.get('/:id', authMiddleware, getRoomById);
+router.put('/:id', authMiddleware, updateRoom);
+router.delete('/:id', authMiddleware, deleteRoom);
 
 module.exports = router;

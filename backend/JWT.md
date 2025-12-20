@@ -8,23 +8,23 @@ Se ha implementado un sistema de autenticación con JWT (JSON Web Tokens) en el 
 
 ### 1. **Modelo de Usuario** (`src/models/user.model.js`)
 
-- ✅ Agregado campo `password` obligatorio (mínimo 6 caracteres)
+- Agregado campo `password` obligatorio (mínimo 6 caracteres)
 - Las contraseñas se encriptan con bcrypt antes de guardarse
 
 ### 2. **Autenticación JWT**
 
-- ✅ Creado middleware de autenticación (`src/middleware/auth.middleware.js`)
-- ✅ Nuevas rutas de autenticación:
+- Creado middleware de autenticación (`src/middleware/auth.middleware.js`)
+- Nuevas rutas de autenticación:
   - `POST /api/users/register` - Registro de usuarios
   - `POST /api/users/login` - Inicio de sesión
-- ✅ Tokens JWT con expiración de 24 horas
+- Tokens JWT con expiración de 24 horas
 
 ### 3. **Relaciones con Usuario**
 
 Todos los modelos ahora incluyen `user_id`:
 
-- ✅ **Movie** - Películas pertenecen a usuarios
-- ✅ **Showtime** - Funciones pertenecen a usuarios
+- **Movie** - Películas pertenecen a usuarios
+- **Showtime** - Funciones pertenecen a usuarios
 
 ### 4. **Rutas Protegidas**
 
@@ -32,11 +32,11 @@ Todos los modelos ahora incluyen `user_id`:
 
 **Todas las operaciones de Showtimes requieren autenticación** y cada usuario solo ve sus propias funciones:
 
-- ✅ `GET /api/showtimes` - Listar funciones del usuario autenticado
-- ✅ `GET /api/showtimes/:id` - Ver función propia por ID
-- ✅ `POST /api/showtimes` - Crear función
-- ✅ `PUT /api/showtimes/:id` - Actualizar función propia
-- ✅ `DELETE /api/showtimes/:id` - Eliminar función propia
+- `GET /api/showtimes` - Listar funciones del usuario autenticado
+- `GET /api/showtimes/:id` - Ver función propia por ID
+- `POST /api/showtimes` - Crear función
+- `PUT /api/showtimes/:id` - Actualizar función propia
+- `DELETE /api/showtimes/:id` - Eliminar función propia
 
 **Comportamiento:** Similar a las reservas del ejemplo backend. Cada usuario solo puede ver y gestionar sus propias funciones.
 
@@ -44,20 +44,20 @@ Todos los modelos ahora incluyen `user_id`:
 
 Las siguientes operaciones requieren autenticación:
 
-- ✅ `POST /api/movies` - Crear película
-- ✅ `PUT /api/movies/:id` - Actualizar película
-- ✅ `DELETE /api/movies/:id` - Eliminar película
+- `POST /api/movies` - Crear película
+- `PUT /api/movies/:id` - Actualizar película
+- `DELETE /api/movies/:id` - Eliminar película
 
 Las rutas GET de movies permanecen públicas para consultas de catálogo:
 
-- 🌐 `GET /api/movies` - Ver todas las películas (público)
-- 🌐 `GET /api/movies/:id` - Ver película por ID (público)
+- `GET /api/movies` - Ver todas las películas (público)
+- `GET /api/movies/:id` - Ver película por ID (público)
 
 ### 5. **Controladores Actualizados**
 
-- ✅ Los controladores verifican que el usuario sea propietario del recurso
-- ✅ Se agrega automáticamente `user_id` al crear recursos
-- ✅ Solo se pueden modificar/eliminar recursos propios
+- Los controladores verifican que el usuario sea propietario del recurso
+- Se agrega automáticamente `user_id` al crear recursos
+- Solo se pueden modificar/eliminar recursos propios
 
 ### 6. **Dependencias Instaladas**
 
@@ -194,8 +194,6 @@ El sistema se ha mantenido simple para facilitar las pruebas:
 
 ## Notas Importantes
 
-⚠️ **IMPORTANTE**: Cambiar `JWT_SECRET` en producción por un valor seguro y aleatorio.
-
-⚠️ **Showtimes (Funciones)**: Completamente privadas. Todas las rutas GET y POST requieren autenticación y cada usuario solo ve sus propias funciones. Funciona exactamente como las reservas del ejemplo en `backend/`.
+⚠️ **Showtimes (Funciones)**: Completamente privadas. Todas las rutas GET y POST requieren autenticación y cada usuario solo ve sus propias funciones.
 
 ⚠️ **Movies (Películas)**: Las rutas GET permanecen públicas para facilitar las consultas de catálogo, pero solo el propietario puede crear, modificar o eliminar sus películas.
