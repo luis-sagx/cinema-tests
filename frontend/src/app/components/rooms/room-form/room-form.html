@@ -1,0 +1,115 @@
+<div class="max-w-2xl mx-auto fade-in">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-white">
+      {{ isEditMode ? 'Edit Room' : 'New Room' }}
+    </h1>
+    <p class="mt-2 text-gray-200">
+      {{ isEditMode ? 'Modify the room details' : 'Complete the room information' }}
+    </p>
+  </div>
+
+  <!-- Form -->
+  <div
+    class="p-6 transition-all border shadow-2xl bg-cinema-accent rounded-xl shadow-cinema-purple/10 border-cinema-blue/20 hover:border-blue-neon"
+  >
+    @if (isLoading && isEditMode) {
+    <div class="py-12 text-center">
+      <div class="inline-block w-12 h-12 border-t-2 border-b-2 rounded-full animate-spin"></div>
+      <p class="mt-4 text-gray-200">Loading...</p>
+    </div>
+    } @else {
+    <form [formGroup]="roomForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- Name -->
+      <div>
+        <label for="name" class="block mb-3 text-base font-medium text-gray-200">
+          Room Name *
+        </label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+          placeholder="E.g.: Room 1, VIP Premium Room"
+        />
+        @if (roomForm.get('name')?.invalid && roomForm.get('name')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Name is required</p>
+        }
+      </div>
+
+      <!-- Capacity -->
+      <div>
+        <label for="capacity" class="block mb-2 text-sm font-medium text-gray-200">
+          Capacity (people) *
+        </label>
+        <input
+          id="capacity"
+          type="number"
+          formControlName="capacity"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+          placeholder="100"
+          min="1"
+        />
+        @if (roomForm.get('capacity')?.invalid && roomForm.get('capacity')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Capacity must be a positive number</p>
+        }
+      </div>
+
+      <!-- Type -->
+      <div>
+        <label for="type" class="block mb-3 text-base font-medium text-gray-200">
+          Room Type *
+        </label>
+        <select
+          id="type"
+          formControlName="type"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg"
+        >
+          <option value="" class="text-gray-500">Select a type</option>
+          @for (type of roomTypes; track type) {
+          <option [value]="type" class="text-gray-900">{{ type }}</option>
+          }
+        </select>
+        @if (roomForm.get('type')?.invalid && roomForm.get('type')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Room type is required</p>
+        }
+      </div>
+
+      <!-- Type Info -->
+      <div class="p-5 bg-gray-900 border border-gray-700 rounded-lg">
+        <h4 class="mb-2 font-semibold text-gray-200">Room Types:</h4>
+        <ul class="space-y-1 text-sm text-gray-200">
+          <li><strong>2D:</strong> Conventional room with 2D projection</li>
+          <li><strong>3D:</strong> Room with 3D projection and advanced technology</li>
+          <li><strong>VIP:</strong> Premium room with luxury seats</li>
+        </ul>
+      </div>
+
+      <!-- Error Message -->
+      @if (errorMessage) {
+      <div class="p-4 border border-red-500 rounded-lg bg-red-900/50">
+        <p class="text-sm text-red-200">{{ errorMessage }}</p>
+      </div>
+      }
+
+      <!-- Buttons -->
+      <div class="flex gap-4">
+        <button
+          type="submit"
+          [disabled]="roomForm.invalid || isLoading"
+          class="flex-1 px-4 py-2 font-semibold text-white transition-colors rounded-lg shadow-lg bg-cinema-blue hover:bg-blue-neon disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ isLoading ? 'Saving...' : isEditMode ? 'Update' : 'Create' }}
+        </button>
+        <button
+          type="button"
+          (click)="cancel()"
+          class="flex-1 px-4 py-2 text-gray-200 transition-all border-2 rounded-lg bg-cinema-darker border-cinema-blue hover:bg-cinema-dark hover:border-blue-neon"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+    }
+  </div>
+</div>

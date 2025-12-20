@@ -1,0 +1,123 @@
+<div class="max-w-2xl mx-auto fade-in">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-white">
+      {{ isEditMode ? 'Edit Movie' : 'New Movie' }}
+    </h1>
+    <p class="mt-2 text-gray-200">
+      {{ isEditMode ? 'Modify the movie details' : 'Complete the movie information' }}
+    </p>
+  </div>
+
+  <!-- Form -->
+  <div
+    class="p-6 transition-all border shadow-2xl w-96 bg-cinema-accent rounded-xl shadow-cinema-purple/10 border-cinema-blue/20 hover:border-blue-neon"
+  >
+    @if (isLoading && isEditMode) {
+    <div class="py-12 text-center">
+      <div class="inline-block w-12 h-12 border-t-2 border-b-2 rounded-full animate-spin"></div>
+      <p class="mt-4 text-gray-200">Loading...</p>
+    </div>
+    } @else {
+    <form [formGroup]="movieForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- Title -->
+      <div>
+        <label for="title" class="block mb-3 text-base font-medium text-gray-200"> Title * </label>
+        <input
+          id="title"
+          type="text"
+          formControlName="title"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+          placeholder="Movie title"
+        />
+        @if (movieForm.get('title')?.invalid && movieForm.get('title')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Title is required</p>
+        }
+      </div>
+
+      <!-- Director -->
+      <div>
+        <label for="director" class="block mb-2 text-sm font-medium text-gray-200">
+          Director
+        </label>
+        <input
+          id="director"
+          type="text"
+          formControlName="director"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+          placeholder="Director name"
+        />
+      </div>
+
+      <!-- Genre -->
+      <div>
+        <label for="genre" class="block mb-3 text-base font-medium text-gray-200"> Genre </label>
+        <input
+          id="genre"
+          type="text"
+          formControlName="genre"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+          placeholder="Movie genre"
+        />
+      </div>
+
+      <!-- Duration -->
+      <div>
+        <label for="duration" class="block mb-2 text-sm font-medium text-gray-200">
+          Duration (minutes) *
+        </label>
+        <input
+          id="duration"
+          type="number"
+          formControlName="duration"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+          placeholder="120"
+          min="1"
+        />
+        @if (movieForm.get('duration')?.invalid && movieForm.get('duration')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Duration must be a positive number</p>
+        }
+      </div>
+
+      <!-- Release Year -->
+      <div>
+        <label for="release_year" class="block mb-2 text-sm font-medium text-gray-200">
+          Release Year
+        </label>
+        <input
+          id="release_year"
+          type="number"
+          formControlName="release_year"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+          placeholder="2025"
+        />
+      </div>
+
+      <!-- Error Message -->
+      @if (errorMessage) {
+      <div class="p-4 border border-red-500 rounded-lg bg-red-900/50">
+        <p class="text-sm text-red-200">{{ errorMessage }}</p>
+      </div>
+      }
+
+      <!-- Buttons -->
+      <div class="flex gap-4">
+        <button
+          type="submit"
+          [disabled]="movieForm.invalid || isLoading"
+          class="flex-1 px-4 py-2 font-semibold text-white transition-colors rounded-lg shadow-lg bg-cinema-blue hover:bg-blue-neon disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ isLoading ? 'Saving...' : isEditMode ? 'Update' : 'Create' }}
+        </button>
+        <button
+          type="button"
+          (click)="cancel()"
+          class="flex-1 px-4 py-2 text-gray-200 transition-all border-2 rounded-lg bg-cinema-darker border-cinema-blue hover:bg-cinema-dark hover:border-blue-neon"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+    }
+  </div>
+</div>

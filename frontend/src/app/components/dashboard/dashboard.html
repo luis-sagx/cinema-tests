@@ -55,7 +55,7 @@
         <!-- User Menu -->
         <div class="flex items-center">
           @if (currentUser$ | async; as user) {
-          <span class="px-3 py-1 mr-6 text-sm text-gray-200 border-2 border-gray-400 rounded-2xl">
+          <span class="px-3 py-2 mr-6 text-sm text-gray-200 border-2 border-gray-400 rounded-2xl">
             <i class="mr-2 fas fa-user"></i>
 
             {{ 'Welcome, ' + user.name }}</span
@@ -84,7 +84,7 @@
     <router-outlet></router-outlet>
   </main>
 
-  <footer class="border-t shadow-inner border-amber-500/30 bg-cinema-darker shadow-amber-500/10">
+  <footer class="border-t shadow-inner border-rose-500/30 bg-cinema-darker shadow-pink-500/20">
     <div class="px-4 py-6 mx-auto text-sm text-center text-gray-300 max-w-7xl sm:px-6 lg:px-8">
       <p>&copy; 2025 CineMax. All rights reserved.</p>
     </div>

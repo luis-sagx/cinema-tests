@@ -1,0 +1,135 @@
+<div class="max-w-2xl mx-auto fade-in">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-white">
+      {{ isEditMode ? 'Edit Showtime' : 'New Showtime' }}
+    </h1>
+    <p class="mt-2 text-gray-200">
+      {{ isEditMode ? 'Modify the showtime details' : 'Schedule a new movie showtime' }}
+    </p>
+  </div>
+
+  <!-- Form -->
+  <div
+    class="p-6 transition-all border shadow-2xl bg-cinema-accent rounded-xl shadow-cinema-blue/10 border-cinema-blue/20 hover:border-blue-neon"
+  >
+    @if (isLoading) {
+    <div class="py-12 text-center">
+      <div class="inline-block w-12 h-12 border-t-2 border-b-2 rounded-full animate-spin"></div>
+      <p class="mt-4 text-gray-200">Loading...</p>
+    </div>
+    } @else {
+    <form [formGroup]="showtimeForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- Movie Selection -->
+      <div>
+        <label for="movie_id" class="block mb-2 text-sm font-medium text-gray-200"> Movie * </label>
+        <select
+          id="movie_id"
+          formControlName="movie_id"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg"
+        >
+          <option value="">Selecciona una película</option>
+          @for (movie of movies; track movie._id) {
+          <option [value]="movie._id">{{ movie.title }} ({{ movie.duration }} min)</option>
+          }
+        </select>
+        @if (showtimeForm.get('movie_id')?.invalid && showtimeForm.get('movie_id')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Movie is required</p>
+        } @if (movies.length === 0) {
+        <p class="mt-1 text-sm text-gray-400">No movies available. Please create a movie first.</p>
+        }
+      </div>
+
+      <!-- Room Selection -->
+      <div>
+        <label for="room_id" class="block mb-2 text-sm font-medium text-gray-200"> Sala * </label>
+        <select
+          id="room_id"
+          formControlName="room_id"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg"
+        >
+          <option value="">Selecciona una sala</option>
+          @for (room of rooms; track room._id) {
+          <option [value]="room._id">
+            {{ room.name }} - {{ room.type }} ({{ room.capacity }} people)
+          </option>
+          }
+        </select>
+        @if (showtimeForm.get('room_id')?.invalid && showtimeForm.get('room_id')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Room is required</p>
+        } @if (rooms.length === 0) {
+        <p class="mt-1 text-sm text-gray-400">No rooms available. Please create a room first.</p>
+        }
+      </div>
+
+      <!-- Start Date -->
+      <div>
+        <label for="start_time" class="block mb-3 text-base font-medium text-gray-200">
+          Start Date *
+        </label>
+        <input
+          id="start_time"
+          type="date"
+          formControlName="start_time"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg"
+        />
+        @if (showtimeForm.get('start_time')?.invalid && showtimeForm.get('start_time')?.touched) {
+        <p class="mt-1 text-sm text-red-400">Start date is required</p>
+        }
+      </div>
+
+      <!-- End Date -->
+      <div>
+        <label for="end_time" class="block mb-3 text-base font-medium text-gray-200">
+          Fecha de Fin *
+        </label>
+        <input
+          id="end_time"
+          type="date"
+          formControlName="end_time"
+          class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg"
+        />
+        @if (showtimeForm.get('end_time')?.invalid && showtimeForm.get('end_time')?.touched) {
+        <p class="mt-1 text-sm text-red-400">End date is required</p>
+        }
+      </div>
+
+      <!-- Info Box -->
+      <div class="p-5 border rounded-lg bg-cinema-darker border-cinema-blue">
+        <h4 class="mb-2 font-semibold text-gray-200">Note:</h4>
+        <p class="text-sm text-gray-200">
+          Showtimes are scheduled for full-day periods. Make sure the end date is after the start
+          date and consider the movie's duration.
+        </p>
+      </div>
+
+      <!-- Error Message -->
+      @if (errorMessage) {
+      <div class="p-4 border border-red-500 rounded-lg bg-red-900/50">
+        <p class="text-sm text-red-200">{{ errorMessage }}</p>
+      </div>
+      }
+
+      <!-- Buttons -->
+      <div class="flex gap-4">
+        <button
+          type="submit"
+          [disabled]="
+            showtimeForm.invalid || isLoading || movies.length === 0 || rooms.length === 0
+          "
+          class="flex-1 px-4 py-2 font-semibold text-white transition-colors rounded-lg shadow-lg bg-cinema-blue hover:bg-blue-neon disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ isLoading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear' }}
+        </button>
+        <button
+          type="button"
+          (click)="cancel()"
+          class="flex-1 px-4 py-2 text-gray-200 transition-all border-2 rounded-lg bg-cinema-darker border-cinema-blue hover:bg-cinema-dark hover:border-blue-neon"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+    }
+  </div>
+</div>
