@@ -65,7 +65,7 @@ export class ShowtimeForm {
         }
       },
       error: (error) => {
-        this.errorMessage = 'Error al cargar los datos';
+        this.errorMessage = 'Error loading data';
         this.isLoading = false;
         console.error(error);
       },
@@ -85,7 +85,7 @@ export class ShowtimeForm {
           this.isLoading = false;
         },
         error: (error) => {
-          this.errorMessage = 'Error al cargar la función';
+          this.errorMessage = 'Error loading showtime';
           this.isLoading = false;
           console.error(error);
         },
@@ -125,7 +125,7 @@ export class ShowtimeForm {
           this.router.navigate(['/dashboard/showtimes']);
         },
         error: (error) => {
-          this.errorMessage = error.error?.message || 'Error al guardar la función';
+          this.errorMessage = error.error?.message || 'Error saving showtime';
           this.isLoading = false;
           console.error(error);
         },

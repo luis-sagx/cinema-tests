@@ -19,16 +19,16 @@ exports.createShowtime = async (req, res) => {
       return res.status(400).json({ message: 'Room does not exist' });
     }
 
-    // Normalizar fechas al inicio y fin del día (sin horas ni minutos)
+    // Normalizar fechas al inicio y fin del día en UTC
     const startDate = new Date(start_time);
-    startDate.setHours(0, 0, 0, 0);
+    startDate.setUTCHours(0, 0, 0, 0);
 
     const endDate = new Date(end_time);
-    endDate.setHours(23, 59, 59, 999);
+    endDate.setUTCHours(23, 59, 59, 999);
 
     // Validar que start_date es futura o actual
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
     if (startDate < today) {
       return res.status(400).json({ message: 'Start date must be today or in the future' });
     }
@@ -134,24 +134,24 @@ exports.updateShowtime = async (req, res) => {
       }
     }
 
-    // Validar start_time si se proporciona - normalizar al inicio del día
+    // Validar start_time si se proporciona - normalizar al inicio del día en UTC
     let newStartTime = showtime.start_time;
     if (start_time) {
       newStartTime = new Date(start_time);
-      newStartTime.setHours(0, 0, 0, 0);
+      newStartTime.setUTCHours(0, 0, 0, 0);
 
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setUTCHours(0, 0, 0, 0);
       if (newStartTime < today) {
         return res.status(400).json({ message: 'Start date must be today or in the future' });
       }
     }
 
-    // Validar end_time vs start_time - normalizar al fin del día
+    // Validar end_time vs start_time - normalizar al fin del día en UTC
     let newEndTime = showtime.end_time;
     if (end_time) {
       newEndTime = new Date(end_time);
-      newEndTime.setHours(23, 59, 59, 999);
+      newEndTime.setUTCHours(23, 59, 59, 999);
     }
 
     if (newEndTime < newStartTime) {

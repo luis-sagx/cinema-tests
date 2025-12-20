@@ -29,7 +29,7 @@ export class ShowtimeList {
         this.isLoading = false;
       },
       error: (error) => {
-        this.errorMessage = 'Error al cargar las funciones';
+        this.errorMessage = 'Error loading showtimes';
         this.isLoading = false;
         console.error(error);
       },
@@ -37,13 +37,13 @@ export class ShowtimeList {
   }
 
   deleteShowtime(id: string): void {
-    if (confirm('¿Estás seguro de que quieres eliminar esta función?')) {
+    if (confirm('Are you sure you want to delete this showtime?')) {
       this.showtimeService.delete(id).subscribe({
         next: () => {
           this.loadShowtimes();
         },
         error: (error) => {
-          this.errorMessage = 'Error al eliminar la función';
+          this.errorMessage = 'Error deleting showtime';
           console.error(error);
         },
       });
@@ -51,7 +51,14 @@ export class ShowtimeList {
   }
 
   formatDate(date: string | Date): string {
-    return new Date(date).toLocaleDateString('es-ES', {
+    const d = new Date(date);
+    const year = d.getUTCFullYear();
+    const month = d.getUTCMonth();
+    const day = d.getUTCDate();
+
+    // Crear fecha en formato local usando los componentes UTC
+    const localDate = new Date(year, month, day);
+    return localDate.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -62,13 +69,13 @@ export class ShowtimeList {
     if (typeof showtime.movie_id === 'object' && showtime.movie_id?.title) {
       return showtime.movie_id.title;
     }
-    return 'Película no disponible';
+    return 'Movie not available';
   }
 
   getRoomName(showtime: Showtime): string {
     if (typeof showtime.room_id === 'object' && showtime.room_id?.name) {
       return showtime.room_id.name;
     }
-    return 'Sala no disponible';
+    return 'Room not available';
   }
 }
