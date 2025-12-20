@@ -16,7 +16,7 @@
 
     <!-- Login Form -->
     <div
-      class="p-8 transition-all border-2 shadow-2xl bg-gradient-to-br bg-fuchsia-600/20 rounded-2xl shadow-purple-500/20 border-purple-500/30 hover:border-purple-400"
+      class="p-8 transition-all border-2 shadow-2xl bg-gradient-to-br bg-fuchsia-900/20 rounded-2xl shadow-purple-500/20 border-purple-500/30 hover:border-purple-400"
     >
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
         <!-- Email -->
@@ -72,7 +72,7 @@
         <button
           type="submit"
           [disabled]="loginForm.invalid || isLoading"
-          class="w-full py-3 mt-2 text-lg font-semibold text-white transition-transform rounded-lg shadow-2xl bg-amber-600 hover:scale-110 shadow-orange-500/30 hover:shadow-orange-500/60 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          class="w-full py-3 mt-2 text-lg font-semibold text-white transition-transform rounded-lg shadow-2xl bg-amber-600 hover:scale-105 shadow-orange-500/30 hover:shadow-orange-500/60 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           @if (isLoading) {
           <span>Logging in...</span>

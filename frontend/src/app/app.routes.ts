@@ -15,11 +15,11 @@ export const routes: Routes = [
     path: 'register',
     loadComponent: () => import('./components/register/register').then((m) => m.Register),
   },
-  //   {
-  //     path: 'dashboard',
-  //     loadComponent: () =>
-  //       import('./components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-  //     canActivate: [authGuard],
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./components/dashboard/dashboard').then((m) => m.Dashboard),
+    canActivate: [authGuard],
+  },
   //     children: [
   //       {
   //         path: '',
