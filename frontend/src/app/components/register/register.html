@@ -1,0 +1,113 @@
+<div class="flex items-center justify-center min-h-screen px-6 py-12">
+  <div class="max-w-md w-full animate-[fadeIn_0.3s_ease-out]">
+    <!-- Logo/Header -->
+    <div class="mb-8 text-center">
+      <h2
+        class="mb-4 text-5xl font-bold text-transparent bg-gradient-to-r from-fuchsia-400 via-blue-500 to-purple-500 bg-clip-text"
+      >
+        Registro
+      </h2>
+      <p class="text-base text-gray-200">Crea tu cuenta en CineMax</p>
+    </div>
+
+    <!-- Register Form -->
+    <div
+      class="p-8 transition-all border-2 shadow-2xl bg-cyan-600/20 rounded-2xl shadow-cyan-500/20 border-cyan-500/30 hover:border-cyan-400"
+    >
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <!-- Name -->
+        <div class="mb-6">
+          <label for="name" class="block mb-2 text-base font-medium text-gold">
+            Nombre Completo
+          </label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+            placeholder="Tu nombre"
+            [class.border-red-500]="name?.invalid && name?.touched"
+          />
+          @if (name?.invalid && name?.touched) {
+          <p class="mt-2 text-sm text-red-400">
+            @if (name?.errors?.['required']) { El nombre es requerido } @if
+            (name?.errors?.['minlength']) { El nombre debe tener al menos 3 caracteres }
+          </p>
+          }
+        </div>
+
+        <!-- Email -->
+        <div class="mb-6">
+          <label for="email" class="block mb-2 text-base font-medium text-gold">
+            Correo Electrónico
+          </label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+            placeholder="tu@email.com"
+            [class.border-red-500]="email?.invalid && email?.touched"
+          />
+          @if (email?.invalid && email?.touched) {
+          <p class="mt-2 text-sm text-red-400">
+            @if (email?.errors?.['required']) { El correo es requerido } @if
+            (email?.errors?.['email']) { Ingresa un correo válido }
+          </p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="mb-6">
+          <label for="password" class="block mb-2 text-base font-medium text-gold">
+            Contraseña
+          </label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+            placeholder="tu contraseña"
+            [class.border-red-500]="password?.invalid && password?.touched"
+          />
+          @if (password?.invalid && password?.touched) {
+          <p class="mt-2 text-sm text-red-400">
+            @if (password?.errors?.['required']) { La contraseña es requerida } @if
+            (password?.errors?.['minlength']) { La contraseña debe tener al menos 6 caracteres }
+          </p>
+          }
+        </div>
+
+        <!-- Error Message -->
+        @if (errorMessage) {
+        <div class="p-4 mb-6 border border-red-500 rounded-lg bg-red-900/50">
+          <p class="text-sm text-red-200">{{ errorMessage }}</p>
+        </div>
+        }
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          [disabled]="registerForm.invalid || isLoading"
+          class="w-full py-3 mt-2 text-lg font-semibold text-white transition-transform rounded-lg shadow-2xl bg-cyan-500 hover:scale-110 shadow-cyan-500/30 hover:shadow-cyan-500/60 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
+          @if (isLoading) {
+          <span>Registrando...</span>
+          } @else {
+          <span>Registrarse</span>
+          }
+        </button>
+
+        <!-- Login Link -->
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-200">
+            ¿Ya tienes cuenta?
+            <a routerLink="/login" class="ml-1 font-medium hover:underline text-cyan-400">
+              Inicia sesión aquí
+            </a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

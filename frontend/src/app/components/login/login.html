@@ -1,0 +1,96 @@
+<div class="flex items-center justify-center min-h-screen px-6 py-12">
+  <div class="w-full max-w-md animate-[fadeIn_0.3s_ease-out]">
+    <!-- Logo/Header -->
+    <div class="mb-6 text-center">
+      <h2
+        class="mb-4 text-5xl font-bold text-transparent bg-gradient-to-r from-yellow-400 via-rose-500 to-amber-500 bg-clip-text"
+      >
+        CineMax
+      </h2>
+      <div class="inline-block w-32 mb-4">
+        <img src="logo.webp" alt="logo" />
+      </div>
+
+      <p class="text-base text-gray-200">Inicia sesión en tu cuenta</p>
+    </div>
+
+    <!-- Login Form -->
+    <div
+      class="p-8 transition-all border-2 shadow-2xl bg-gradient-to-br bg-fuchsia-600/20 rounded-2xl shadow-purple-500/20 border-purple-500/30 hover:border-purple-400"
+    >
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <!-- Email -->
+        <div class="mb-6">
+          <label for="email" class="block mb-2 text-base font-medium text-gold">
+            Correo Electrónico
+          </label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+            placeholder="tu@email.com"
+            [class.border-red-500]="email?.invalid && email?.touched"
+          />
+          @if (email?.invalid && email?.touched) {
+          <p class="mt-2 text-sm text-red-400">
+            @if (email?.errors?.['required']) { El correo es requerido } @if
+            (email?.errors?.['email']) { Ingresa un correo válido }
+          </p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="mb-6">
+          <label for="password" class="block mb-2 text-base font-medium text-gold">
+            Contraseña
+          </label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
+            placeholder="tu contraseña"
+            [class.border-red-500]="password?.invalid && password?.touched"
+          />
+          @if (password?.invalid && password?.touched) {
+          <p class="mt-2 text-sm text-red-400">
+            @if (password?.errors?.['required']) { La contraseña es requerida } @if
+            (password?.errors?.['minlength']) { La contraseña debe tener al menos 6 caracteres }
+          </p>
+          }
+        </div>
+
+        <!-- Error Message -->
+        @if (errorMessage) {
+        <div class="p-4 mb-6 border border-red-500 rounded-lg bg-red-900/50">
+          <p class="text-sm text-red-200">{{ errorMessage }}</p>
+        </div>
+        }
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid || isLoading"
+          class="w-full py-3 mt-2 text-lg font-semibold text-white transition-transform rounded-lg shadow-2xl bg-amber-600 hover:scale-110 shadow-orange-500/30 hover:shadow-orange-500/60 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
+          @if (isLoading) {
+          <span>Iniciando sesión...</span>
+          } @else {
+          <span>Iniciar Sesión</span>
+          }
+        </button>
+
+        <!-- Register Link -->
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-200">
+            ¿No tienes cuenta?
+            <a routerLink="/register" class="ml-1 font-medium text-pink-400 hover:underline">
+              Regístrate aquí
+            </a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

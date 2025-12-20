@@ -1,1 +1,27 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss';
+
+body {
+  background: linear-gradient(
+    135deg,
+    #1a0a2e 0%,
+    #0f0521 25%,
+    #1e0a3c 50%,
+    #0a0a1f 75%,
+    #150f2e 100%
+  );
+  color: #e5e7eb;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Animación fadeIn */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
