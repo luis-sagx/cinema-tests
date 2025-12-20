@@ -5,9 +5,9 @@
       <h2
         class="mb-4 text-5xl font-bold text-transparent bg-gradient-to-r from-fuchsia-400 via-blue-500 to-purple-500 bg-clip-text"
       >
-        Registro
+        Register
       </h2>
-      <p class="text-base text-gray-200">Crea tu cuenta en CineMax</p>
+      <p class="text-base text-gray-200">Create your account at CineMax</p>
     </div>
 
     <!-- Register Form -->
@@ -17,21 +17,19 @@
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
         <!-- Name -->
         <div class="mb-6">
-          <label for="name" class="block mb-2 text-base font-medium text-gold">
-            Nombre Completo
-          </label>
+          <label for="name" class="block mb-2 text-base font-medium text-gold"> Full Name </label>
           <input
             id="name"
             type="text"
             formControlName="name"
             class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
-            placeholder="Tu nombre"
+            placeholder="Your name"
             [class.border-red-500]="name?.invalid && name?.touched"
           />
           @if (name?.invalid && name?.touched) {
           <p class="mt-2 text-sm text-red-400">
-            @if (name?.errors?.['required']) { El nombre es requerido } @if
-            (name?.errors?.['minlength']) { El nombre debe tener al menos 3 caracteres }
+            @if (name?.errors?.['required']) { Name is required } @if (name?.errors?.['minlength'])
+            { Name must be at least 3 characters }
           </p>
           }
         </div>
@@ -39,20 +37,20 @@
         <!-- Email -->
         <div class="mb-6">
           <label for="email" class="block mb-2 text-base font-medium text-gold">
-            Correo Electrónico
+            Email Address
           </label>
           <input
             id="email"
             type="email"
             formControlName="email"
             class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
-            placeholder="tu@email.com"
+            placeholder="your@email.com"
             [class.border-red-500]="email?.invalid && email?.touched"
           />
           @if (email?.invalid && email?.touched) {
           <p class="mt-2 text-sm text-red-400">
-            @if (email?.errors?.['required']) { El correo es requerido } @if
-            (email?.errors?.['email']) { Ingresa un correo válido }
+            @if (email?.errors?.['required']) { Email is required } @if (email?.errors?.['email']) {
+            Enter a valid email }
           </p>
           }
         </div>
@@ -60,20 +58,20 @@
         <!-- Password -->
         <div class="mb-6">
           <label for="password" class="block mb-2 text-base font-medium text-gold">
-            Contraseña
+            Password
           </label>
           <input
             id="password"
             type="password"
             formControlName="password"
             class="w-full px-4 py-3 text-base text-gray-900 bg-white rounded-lg placeholder:text-gray-500"
-            placeholder="tu contraseña"
+            placeholder="your password"
             [class.border-red-500]="password?.invalid && password?.touched"
           />
           @if (password?.invalid && password?.touched) {
           <p class="mt-2 text-sm text-red-400">
-            @if (password?.errors?.['required']) { La contraseña es requerida } @if
-            (password?.errors?.['minlength']) { La contraseña debe tener al menos 6 caracteres }
+            @if (password?.errors?.['required']) { Password is required } @if
+            (password?.errors?.['minlength']) { Password must be at least 6 characters }
           </p>
           }
         </div>
@@ -92,18 +90,18 @@
           class="w-full py-3 mt-2 text-lg font-semibold text-white transition-transform rounded-lg shadow-2xl bg-cyan-500 hover:scale-110 shadow-cyan-500/30 hover:shadow-cyan-500/60 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           @if (isLoading) {
-          <span>Registrando...</span>
+          <span>Registering...</span>
           } @else {
-          <span>Registrarse</span>
+          <span>Register</span>
           }
         </button>
 
         <!-- Login Link -->
         <div class="mt-6 text-center">
           <p class="text-sm text-gray-200">
-            ¿Ya tienes cuenta?
+            Already have an account?
             <a routerLink="/login" class="ml-1 font-medium hover:underline text-cyan-400">
-              Inicia sesión aquí
+              Log in here
             </a>
           </p>
         </div>

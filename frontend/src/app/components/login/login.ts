@@ -39,7 +39,7 @@ export class Login {
         },
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.error?.message || 'Error al iniciar sesión';
+          this.errorMessage = error.error?.message || 'Error to login';
         },
       });
     }
