@@ -39,23 +39,23 @@ async function createRoom(req, res) {
   }
 }
 
-// Obtener todas las salas
+// Obtener todas las salas del usuario autenticado
 async function getRooms(req, res) {
   try {
-    const rooms = await Room.find();
+    const rooms = await Room.find({ user_id: req.userId });
     res.json(rooms);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving rooms', error: error.message });
   }
 }
 
-// Obtener una sala por ID
+// Obtener una sala por ID (solo si pertenece al usuario autenticado)
 async function getRoomById(req, res) {
   try {
     const { id } = req.params;
-    const room = await Room.findById(id);
+    const room = await Room.findOne({ _id: id, user_id: req.userId });
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json({ message: 'Room not found or unauthorized' });
     }
     res.json(room);
   } catch (error) {
@@ -66,7 +66,7 @@ async function getRoomById(req, res) {
   }
 }
 
-// Actualizar una sala por ID
+// Actualizar una sala por ID (solo si pertenece al usuario autenticado)
 async function updateRoom(req, res) {
   try {
     const { id } = req.params;
@@ -76,6 +76,12 @@ async function updateRoom(req, res) {
       return res.status(400).json({
         message: 'At least one field (name, capacity, type) is required to update',
       });
+    }
+
+    // Verificar que la sala existe y pertenece al usuario
+    const existingRoom = await Room.findOne({ _id: id, user_id: req.userId });
+    if (!existingRoom) {
+      return res.status(404).json({ message: 'Room not found or unauthorized' });
     }
 
     const room = await Room.findByIdAndUpdate(
@@ -96,14 +102,18 @@ async function updateRoom(req, res) {
   }
 }
 
-// Eliminar una sala por ID
+// Eliminar una sala por ID (solo si pertenece al usuario autenticado)
 async function deleteRoom(req, res) {
   try {
     const { id } = req.params;
-    const room = await Room.findByIdAndDelete(id);
+
+    // Verificar que la sala existe y pertenece al usuario
+    const room = await Room.findOne({ _id: id, user_id: req.userId });
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json({ message: 'Room not found or unauthorized' });
     }
+
+    await Room.findByIdAndDelete(id);
     res.status(200).json({ message: 'Room successfully removed' });
   } catch (error) {
     if (error.name === 'CastError') {

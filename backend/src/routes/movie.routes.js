@@ -10,9 +10,11 @@ const authMiddleware = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// Todas las rutas requieren autenticación (el user es administrador)
-router.get('/', authMiddleware, getAllMovies);
-router.get('/:id', authMiddleware, getMovieById);
+// Rutas públicas (GET) - cualquiera puede ver el catálogo de películas
+router.get('/', getAllMovies);
+router.get('/:id', getMovieById);
+
+// Rutas protegidas (requieren autenticación) - solo administradores pueden crear/editar/eliminar
 router.post('/', authMiddleware, createMovie);
 router.put('/:id', authMiddleware, updateMovie);
 router.delete('/:id', authMiddleware, deleteMovie);

@@ -184,10 +184,10 @@ exports.updateShowtime = async (req, res) => {
     }
 
     // Actualizar los campos con fechas normalizadas
-    if (movie_id) showtime.movie_id = movie_id;
-    if (room_id) showtime.room_id = room_id;
-    if (start_time) showtime.start_time = newStartTime;
-    if (end_time) showtime.end_time = newEndTime;
+    if (movie_id) { showtime.movie_id = movie_id; }
+    if (room_id) { showtime.room_id = room_id; }
+    if (start_time) { showtime.start_time = newStartTime; }
+    if (end_time) { showtime.end_time = newEndTime; }
 
     await showtime.save();
 

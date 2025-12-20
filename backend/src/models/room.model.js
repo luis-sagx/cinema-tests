@@ -20,6 +20,11 @@ const roomSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Type is required'],
     enum: ['2D', '3D', 'VIP'],
+  },
+  user_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   }
 }, { timestamps: true });
 
