@@ -43,7 +43,8 @@ export class RoomList {
           this.loadRooms();
         },
         error: (error) => {
-          this.errorMessage = 'Error al eliminar la sala';
+          this.errorMessage =
+            'The room cannot be deleted because it is being used in one or more showtimes';
           console.error(error);
         },
       });

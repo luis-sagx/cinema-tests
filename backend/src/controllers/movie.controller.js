@@ -1,4 +1,5 @@
 const Movie = require('../models/movie.model');
+const Showtime = require('../models/showtime.model');
 
 /**
  * Devuelve todas las películas almacenadas
@@ -129,11 +130,20 @@ async function deleteMovie(req, res) {
     const { id } = req.params;
 
     // Verificar que la película existe y pertenece al usuario
-    const deletedMovie = await Movie.findOneAndDelete({ _id: id, user_id: req.userId });
-
-    if (!deletedMovie) {
+    const movie = await Movie.findOne({ _id: id, user_id: req.userId });
+    if (!movie) {
       return res.status(404).json({ message: 'Movie not found or unauthorized' });
     }
+
+    // Verificar si la película está siendo usada en algún showtime
+    const showtimesUsingMovie = await Showtime.countDocuments({ movie_id: id });
+    if (showtimesUsingMovie > 0) {
+      return res.status(400).json({
+        message: 'Cannot delete movie because it is being used in one or more showtimes'
+      });
+    }
+
+    await Movie.findByIdAndDelete(id);
 
     res.status(204).send();
   } catch (error) {

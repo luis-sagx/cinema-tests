@@ -43,7 +43,8 @@ export class MovieList {
           this.loadMovies();
         },
         error: (error) => {
-          this.errorMessage = 'Error to delete movie';
+          this.errorMessage =
+            'The movie cannot be deleted because it is being used in one or more showtimes';
           console.error(error);
         },
       });

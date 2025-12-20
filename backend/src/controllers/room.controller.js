@@ -1,4 +1,5 @@
 const Room = require('../models/room.model');
+const Showtime = require('../models/showtime.model');
 
 // Crear una nueva sala
 async function createRoom(req, res) {
@@ -111,6 +112,14 @@ async function deleteRoom(req, res) {
     const room = await Room.findOne({ _id: id, user_id: req.userId });
     if (!room) {
       return res.status(404).json({ message: 'Room not found or unauthorized' });
+    }
+
+    // Verificar si la sala está siendo usada en algún showtime
+    const showtimesUsingRoom = await Showtime.countDocuments({ room_id: id });
+    if (showtimesUsingRoom > 0) {
+      return res.status(400).json({
+        message: 'Cannot delete room because it is being used in one or more showtimes'
+      });
     }
 
     await Room.findByIdAndDelete(id);
