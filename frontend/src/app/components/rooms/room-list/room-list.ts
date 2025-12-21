@@ -53,7 +53,7 @@ export class RoomList {
 
   getTypeClass(type: string): string {
     const classes: Record<string, string> = {
-      '2D': 'bg-blue-neon/20 text-blue-neon border-blue-neon font-semibold ',
+      '2D': 'bg-cyan-neon/20 text-cyan-neon border-cyan-neon font-semibold ',
       '3D': 'bg-purple-neon/20 text-purple-neon border-purple-neon font-semibold',
       VIP: 'bg-gold/20 text-gold-light border-gold-light font-semibold',
     };

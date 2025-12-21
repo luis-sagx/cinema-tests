@@ -1,8 +1,8 @@
 <div class="animate-[fadeIn_0.3s_ease-out]">
   <!-- Header -->
   <div class="flex items-center justify-between mb-8">
-    <h1 class="text-3xl font-bold text-cyan-400">
-      <svg class="inline w-8 h-8 mr-2 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+    <h1 class="text-3xl font-bold text-blue-400">
+      <svg class="inline w-8 h-8 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
         <path
           d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
         ></path>
@@ -11,7 +11,7 @@
     </h1>
     <a
       routerLink="/dashboard/rooms/create"
-      class="px-2 py-2 ml-4 font-semibold text-white transition-colors rounded-lg shadow-lg bg-cyan-500 hover:bg-cyan-400"
+      class="px-3 py-2 ml-4 font-semibold text-white transition-colors bg-blue-500 rounded-lg shadow-lg hover:bg-blue-400"
     >
       <svg class="inline w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
         <path
@@ -44,16 +44,16 @@
   <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
     @for (room of rooms; track room._id) {
     <div
-      class="p-6 transition-all border-2 shadow-2xl bg-cinema-accent shadow-cyan-500/20 rounded-xl border-cyan-500/30 hover:border-cyan-400 hover:shadow-cyan-500/40"
+      class="p-6 transition-all border-2 shadow-2xl bg-cinema-accent shadow-blue-500/20 rounded-xl border-blue-500/30 hover:border-blue-400 hover:shadow-blue-500/40"
     >
       <div class="flex flex-col h-full">
         <div class="flex-1">
           <div class="flex items-start justify-between mb-3">
-            <h3 class="text-xl font-bold text-cyan-400">
+            <h3 class="text-xl font-bold text-blue-400">
               {{ room.name }}
             </h3>
             <span
-              class="px-3 py-1 text-xs font-semibold border rounded-full"
+              class="px-3 py-1 ml-4 text-xs font-semibold border rounded-full"
               [ngClass]="getTypeClass(room.type)"
             >
               {{ room.type }}
@@ -70,7 +70,7 @@
         <div class="flex gap-3 mt-4">
           <a
             [routerLink]="['/dashboard/rooms/edit', room._id]"
-            class="flex items-center justify-center px-6 py-2 font-semibold text-white rounded-lg shadow-lg bg-cyan-neon hover:bg-cyan-500"
+            class="flex items-center justify-center px-6 py-2 font-semibold text-white rounded-lg shadow-lg bg-blue-neon hover:bg-blue-500"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path

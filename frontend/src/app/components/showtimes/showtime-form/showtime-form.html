@@ -11,7 +11,7 @@
 
   <!-- Form -->
   <div
-    class="p-6 transition-all border shadow-2xl bg-cinema-accent rounded-xl shadow-cinema-blue/10 border-cinema-blue/20 hover:border-blue-neon"
+    class="p-6 transition-all border shadow-2xl w-xl bg-cinema-accent rounded-xl shadow-cinema-blue/10 border-cinema-blue/20 hover:border-blue-neon"
   >
     @if (isLoading) {
     <div class="py-12 text-center">
@@ -42,7 +42,7 @@
 
       <!-- Room Selection -->
       <div>
-        <label for="room_id" class="block mb-2 text-sm font-medium text-gray-200"> Sala * </label>
+        <label for="room_id" class="block mb-2 text-sm font-medium text-gray-200"> Room * </label>
         <select
           id="room_id"
           formControlName="room_id"
@@ -81,7 +81,7 @@
       <!-- End Date -->
       <div>
         <label for="end_time" class="block mb-3 text-base font-medium text-gray-200">
-          Fecha de Fin *
+          End Date *
         </label>
         <input
           id="end_time"
@@ -119,14 +119,14 @@
           "
           class="flex-1 px-4 py-2 font-semibold text-white transition-colors rounded-lg shadow-lg bg-cinema-blue hover:bg-blue-neon disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {{ isLoading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear' }}
+          {{ isLoading ? 'Saving...' : isEditMode ? 'Update' : 'Create' }}
         </button>
         <button
           type="button"
           (click)="cancel()"
           class="flex-1 px-4 py-2 text-gray-200 transition-all border-2 rounded-lg bg-cinema-darker border-cinema-blue hover:bg-cinema-dark hover:border-blue-neon"
         >
-          Cancelar
+          Cancel
         </button>
       </div>
     </form>
