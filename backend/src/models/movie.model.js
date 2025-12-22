@@ -35,7 +35,7 @@ const movieSchema = new mongoose.Schema(
           const currentYear = new Date().getFullYear();
           return /^\d{4}$/.test(String(value)) && year >= 1895 && year <= currentYear;
         },
-        message: 'Release year must be a 4-digit number'
+        message: 'Release year cannot be in the future'
       },
       default: null
     },

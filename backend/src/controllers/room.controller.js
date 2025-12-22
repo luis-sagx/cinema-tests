@@ -115,7 +115,7 @@ async function deleteRoom(req, res) {
     }
 
     // Verificar si la sala está siendo usada en algún showtime
-    const showtimesUsingRoom = await Showtime.countDocuments({ room_id: id });
+    const showtimesUsingRoom = await Showtime.countDocuments({ movie_id: id });
     if (showtimesUsingRoom > 0) {
       return res.status(400).json({
         message: 'Cannot delete room because it is being used in one or more showtimes'

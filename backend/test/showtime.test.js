@@ -1,599 +1,718 @@
-require('dotenv').config();
 const request = require('supertest');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+
 const app = require('../src/app');
 const Movie = require('../src/models/movie.model');
 const Room = require('../src/models/room.model');
 const Showtime = require('../src/models/showtime.model');
+const User = require('../src/models/user.model');
+const { connectTestDB } = require('../src/config/setupDB');
 
-// Conectar a una base de datos 
+let token;
+let user;
+
 beforeAll(async () => {
-  // Si ya hay conexión, cerrarla
-  if (mongoose.connection.readyState !== 0) {
-    await mongoose.connection.close();
-  }
-  
-  const dbUri = process.env.MONGODB_URI.replace('/film-management', '/film-management-test');
-  await mongoose.connect(dbUri);
+  await connectTestDB();
+
+  await User.deleteMany({});
+  await Movie.deleteMany({});
+  await Room.deleteMany({});
+  await Showtime.deleteMany({});
+
+  user = await User.create({
+    name: 'Test User',
+    email: 'testuser1@example.com',
+    password: 'password123',
+  });
+
+  token = jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET || 'testsecret',
+    { expiresIn: '24h' }
+  );
 });
 
-// Limpiar la base de datos antes de cada test
 beforeEach(async () => {
-  await Showtime.deleteMany({});
   await Movie.deleteMany({});
   await Room.deleteMany({});
+  await Showtime.deleteMany({});
 });
 
-// Desconectar después de todos los tests
 afterAll(async () => {
-  await Showtime.deleteMany({});
   await Movie.deleteMany({});
   await Room.deleteMany({});
+  await Showtime.deleteMany({});
   await mongoose.connection.close();
 });
 
-describe('Showtime API', () => {
-  // Prueba de POST exitoso
-  test('POST /api/showtimes should create a new showtime', async () => {
-    // Crear película y sala primero
+describe('Showtime API (JWT protected)', () => {
+
+  /* =========================
+     POST
+  ========================== */
+
+  test('POST /api/showtimes creates a showtime', async () => {
     const movie = await Movie.create({
-      title: 'Test Movie',
+      title: 'Movie',
       duration: 120,
-      release_year: 2024
+      release_year: 2024,
+      user_id: user._id
     });
 
     const room = await Room.create({
-      name: 'Test Room',
+      name: 'Room',
       capacity: 100,
-      type: '2D'
+      type: '2D',
+      user_id: user._id
     });
 
-    // Verificar que existen
-    const movieExists = await Movie.findById(movie._id);
-    const roomExists = await Room.findById(room._id);
-    expect(movieExists).not.toBeNull();
-    expect(roomExists).not.toBeNull();
-
-    const newShowtime = {
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000), // Mañana
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000) // Pasado mañana
-    };
-
-    const res = await request(app).post('/api/showtimes').send(newShowtime);
-
-    if (res.statusCode !== 201) {
-      console.log('Error response:', res.body);
-    }
+    const res = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
 
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty('_id');
     expect(res.body.movie_id).toBe(movie._id.toString());
     expect(res.body.room_id).toBe(room._id.toString());
+    expect(res.body.user_id).toBe(user._id.toString());
   });
 
-  // Prueba de POST con movie_id inexistente
-  test('POST /api/showtimes should fail with non-existent movie_id', async () => {
+  test('POST fails with non-existent movie', async () => {
     const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id
     });
 
-    const res = await request(app).post('/api/showtimes').send({
-      movie_id: new mongoose.Types.ObjectId(),
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
+    const res = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: new mongoose.Types.ObjectId(),
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
 
     expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Movie does not exist');
+    expect(res.body.message).toBe('Movie does not exist');
   });
 
-  // Prueba de POST con room_id inexistente
-  test('POST /api/showtimes should fail with non-existent room_id', async () => {
+  test('POST fails with past start_time', async () => {
     const movie = await Movie.create({
-      title: 'Test Movie',
+      title: 'Movie',
       duration: 120,
-      release_year: 2024
+      release_year: 2024,
+      user_id: user._id
     });
 
-    const res = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: new mongoose.Types.ObjectId(),
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id
     });
+
+    const res = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
 
     expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Room does not exist');
+    expect(res.body.message).toBe('Start date must be today or in the future');
   });
 
-  // Prueba de POST con start_time en el pasado
-  test('POST /api/showtimes should fail with past start_time', async () => {
+  /* =========================
+     GET
+  ========================== */
+
+  test('GET /api/showtimes returns user showtimes', async () => {
     const movie = await Movie.create({
-      title: 'Test Movie',
+      title: 'Movie',
       duration: 120,
-      release_year: 2024
+      release_year: 2024,
+      user_id: user._id
     });
 
     const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id
     });
 
-    const res = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ayer
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
+    await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
 
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Start time must be in the future');
-  });
+    const res = await request(app)
+      .get('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`);
 
-  // Prueba de POST cuando end_time <= start_time
-  test('POST /api/showtimes should fail when end_time <= start_time', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    const res = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: startTime,
-      end_time: startTime // Mismo tiempo
-    });
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'End time must be greater than start time');
-  });
-
-  // Prueba de GET por ID exitoso
-  test('GET /api/showtimes/:id should return a showtime by id', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const createRes = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const showtimeId = createRes.body._id;
-
-    const res = await request(app).get(`/api/showtimes/${showtimeId}`);
-    expect(res.statusCode).toBe(200);
-    expect(res.body._id).toBe(showtimeId);
-  });
-
-  // Prueba de GET por ID cuando no existe
-  test('GET /api/showtimes/:id should return 404 if showtime not found', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    const res = await request(app).get(`/api/showtimes/${fakeId}`);
-    expect(res.statusCode).toBe(404);
-    expect(res.body).toHaveProperty('message', 'Showtime not found');
-  });
-
-  // Prueba de PUT exitoso
-  test('PUT /api/showtimes/:id should update a showtime', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const createRes = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const showtimeId = createRes.body._id;
-
-    const res = await request(app).put(`/api/showtimes/${showtimeId}`).send({
-      start_time: new Date(Date.now() + 48 * 60 * 60 * 1000), // En 2 días
-      end_time: new Date(Date.now() + 50 * 60 * 60 * 1000)
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body._id).toBe(showtimeId);
-  });
-
-  // Prueba de PUT cuando el showtime no existe
-  test('PUT /api/showtimes/:id should return 404 if showtime not found', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    const res = await request(app).put(`/api/showtimes/${fakeId}`).send({
-      start_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 50 * 60 * 60 * 1000)
-    });
-
-    expect(res.statusCode).toBe(404);
-    expect(res.body).toHaveProperty('message', 'Showtime not found');
-  });
-
-  // Prueba de PUT con solapamiento
-  test('PUT /api/showtimes/:id should fail with overlapping showtime', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    // Crear dos funciones
-    const showtime1 = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const showtime2 = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 72 * 60 * 60 * 1000), // En 3 días
-      end_time: new Date(Date.now() + 74 * 60 * 60 * 1000)
-    });
-
-    // Intentar actualizar showtime2 para que se solape con showtime1
-    const res = await request(app).put(`/api/showtimes/${showtime2.body._id}`).send({
-      start_time: showtime1.body.start_time
-    });
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body.message).toContain('overlapping showtime');
-  });
-
-  // Prueba de DELETE exitoso
-  test('DELETE /api/showtimes/:id should delete a showtime', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const createRes = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const showtimeId = createRes.body._id;
-
-    const res = await request(app).delete(`/api/showtimes/${showtimeId}`);
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toContain('deleted successfully');
-
-    // Verificar que ya no existe
-    const getRes = await request(app).get(`/api/showtimes/${showtimeId}`);
-    expect(getRes.statusCode).toBe(404);
-  });
-
-  // Prueba de DELETE cuando el showtime no existe
-  test('DELETE /api/showtimes/:id should return 404 if showtime not found', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    const res = await request(app).delete(`/api/showtimes/${fakeId}`);
-    expect(res.statusCode).toBe(404);
-    expect(res.body).toHaveProperty('message', 'Showtime not found');
-  });
-
-  // Prueba de GET todos los showtimes
-  test('GET /api/showtimes should return all showtimes', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const res = await request(app).get('/api/showtimes');
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body.length).toBe(1);
   });
 
-  // Prueba de PUT con movie_id diferente
-  test('PUT /api/showtimes/:id should update with new movie_id', async () => {
-    const movie1 = await Movie.create({
-      title: 'Test Movie 1',
+  test('GET /api/showtimes/:id returns showtime', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
       duration: 120,
-      release_year: 2024
+      release_year: 2024,
+      user_id: user._id
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id
+    });
+
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    const res = await request(app)
+      .get(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body._id).toBe(createRes.body._id);
+  });
+
+  /* =========================
+     PUT
+  ========================== */
+
+  test('PUT /api/showtimes/:id updates showtime', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id,
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id,
+    });
+
+    // Crear el showtime
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),  // Un día después
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),  // Dos días después
+      });
+
+    // Intentamos actualizar el showtime con una nueva fecha de inicio
+    const newStartTime = new Date(Date.now() + 72 * 60 * 60 * 1000); // Tres días después
+
+    const res = await request(app)
+      .put(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        start_time: newStartTime,  // Actualizando la fecha
+        end_time: new Date(newStartTime.getTime() + (movie.duration * 60 * 1000)) 
+      });
+
+    // Verificamos que la respuesta sea 200
+    expect(res.statusCode).toBe(200);
+
+    // Verificamos que el showtime se haya actualizado correctamente
+    expect(res.body._id).toBe(createRes.body._id);
+  });
+
+
+  /* =========================
+     DELETE
+  ========================== */
+
+  test('DELETE /api/showtimes/:id deletes showtime', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id
+    });
+
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    const res = await request(app)
+      .delete(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('Showtime deleted successfully');
+  });
+
+  test('POST fails with non-existent room', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id
+    });
+
+    const res = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: new mongoose.Types.ObjectId(),
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('Room does not exist');
+  });
+
+  test('POST fails when end_time is before start_time', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id
+    });
+
+    const res = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        // start after end
+        start_time: new Date(Date.now() + 72 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('End date must be greater than or equal to start date');
+  });
+
+  test('POST fails with overlapping showtime', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id
+    });
+
+    // Create initial showtime
+    await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    // Try to create overlapping
+    const res = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 36 * 60 * 60 * 1000), // inside existing
+        end_time: new Date(Date.now() + 60 * 60 * 60 * 1000),
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('There is an overlapping showtime in this room for these dates');
+  });
+
+  test('GET /api/showtimes/:id returns 404 when not found', async () => {
+    const res = await request(app)
+      .get(`/api/showtimes/${new mongoose.Types.ObjectId()}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toBe('Showtime not found or unauthorized');
+  });
+
+  test('PUT /api/showtimes/:id returns 404 when not found', async () => {
+    const res = await request(app)
+      .put(`/api/showtimes/${new mongoose.Types.ObjectId()}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ start_time: new Date(Date.now() + 24 * 60 * 60 * 1000) });
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toBe('Showtime not found or unauthorized');
+  });
+
+  test('PUT fails with non-existent movie', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id,
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id,
+    });
+
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    const res = await request(app)
+      .put(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ movie_id: new mongoose.Types.ObjectId() });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('Movie does not exist');
+  });
+
+  test('PUT fails with non-existent room', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id,
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id,
+    });
+
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    const res = await request(app)
+      .put(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ room_id: new mongoose.Types.ObjectId() });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('Room does not exist');
+  });
+
+  test('PUT fails with past start_time', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id,
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id,
+    });
+
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    const res = await request(app)
+      .put(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ start_time: new Date(Date.now() - 24 * 60 * 60 * 1000) });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('Start date must be today or in the future');
+  });
+
+  test('PUT fails when end_time is before start_time', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id,
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id,
+    });
+
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    const res = await request(app)
+      .put(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        start_time: new Date(Date.now() + 72 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('End date must be greater than or equal to start date');
+  });
+
+  test('PUT fails with overlapping showtime', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id,
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id,
+    });
+
+    // Create first showtime
+    const createRes1 = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    // Create second showtime
+    const createRes2 = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 96 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 120 * 60 * 60 * 1000),
+      });
+
+    // Try to update second to overlap with first
+    const res = await request(app)
+      .put(`/api/showtimes/${createRes2.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        start_time: new Date(Date.now() + 36 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 60 * 60 * 60 * 1000),
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('There is an overlapping showtime in this room for these dates');
+  });
+
+  test('DELETE returns 404 when showtime not found', async () => {
+    const res = await request(app)
+      .delete(`/api/showtimes/${new mongoose.Types.ObjectId()}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toBe('Showtime not found or unauthorized');
+  });
+
+  test('POST returns 400 when Movie.findById throws', async () => {
+    const spy = jest.spyOn(Movie, 'findById').mockImplementation(() => { throw new Error('DB failure'); });
+
+    const res = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: new mongoose.Types.ObjectId(),
+        room_id: new mongoose.Types.ObjectId(),
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('DB failure');
+    spy.mockRestore();
+  });
+
+  test('GET /api/showtimes returns 500 when Showtime.find throws', async () => {
+    const spy = jest.spyOn(Showtime, 'find').mockImplementation(() => { throw new Error('DB fail'); });
+
+    const res = await request(app)
+      .get('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body.message).toBe('DB fail');
+    spy.mockRestore();
+  });
+
+  test('GET /api/showtimes/:id returns 500 when Showtime.findOne throws', async () => {
+    const spy = jest.spyOn(Showtime, 'findOne').mockImplementation(() => { throw new Error('DB fail'); });
+
+    const res = await request(app)
+      .get(`/api/showtimes/${new mongoose.Types.ObjectId()}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body.message).toBe('DB fail');
+    spy.mockRestore();
+  });
+
+  test('PUT returns 400 when Showtime.findOne throws', async () => {
+    const spy = jest.spyOn(Showtime, 'findOne').mockImplementation(() => { throw new Error('DB fail'); });
+
+    const res = await request(app)
+      .put(`/api/showtimes/${new mongoose.Types.ObjectId()}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ start_time: new Date(Date.now() + 24 * 60 * 60 * 1000) });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('DB fail');
+    spy.mockRestore();
+  });
+
+  test('DELETE returns 500 when Showtime.findOneAndDelete throws', async () => {
+    const spy = jest.spyOn(Showtime, 'findOneAndDelete').mockImplementation(() => { throw new Error('DB fail'); });
+
+    const res = await request(app)
+      .delete(`/api/showtimes/${new mongoose.Types.ObjectId()}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body.message).toBe('DB fail');
+    spy.mockRestore();
+  });
+
+  test('PUT updates movie and room when valid ids provided', async () => {
+    const movie1 = await Movie.create({
+      title: 'Movie1',
+      duration: 100,
+      release_year: 2024,
+      user_id: user._id,
     });
 
     const movie2 = await Movie.create({
-      title: 'Test Movie 2',
+      title: 'Movie2',
       duration: 90,
-      release_year: 2024
+      release_year: 2024,
+      user_id: user._id,
     });
 
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
+    const room1 = await Room.create({ name: 'Room1', capacity: 50, type: '2D', user_id: user._id });
+    const room2 = await Room.create({ name: 'Room2', capacity: 60, type: '3D', user_id: user._id });
 
-    const createRes = await request(app).post('/api/showtimes').send({
-      movie_id: movie1._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie1._id,
+        room_id: room1._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
 
-    const showtimeId = createRes.body._id;
+    const newStart = new Date(Date.now() + 72 * 60 * 60 * 1000);
+    const newEnd = new Date(Date.now() + 96 * 60 * 60 * 1000);
 
-    const res = await request(app).put(`/api/showtimes/${showtimeId}`).send({
-      movie_id: movie2._id
-    });
+    const res = await request(app)
+      .put(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie2._id,
+        room_id: room2._id,
+        start_time: newStart,
+        end_time: newEnd,
+      });
 
     expect(res.statusCode).toBe(200);
     expect(res.body.movie_id).toBe(movie2._id.toString());
-  });
-
-  // Prueba de PUT con movie_id inexistente
-  test('PUT /api/showtimes/:id should fail with non-existent movie_id', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const createRes = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const showtimeId = createRes.body._id;
-
-    const res = await request(app).put(`/api/showtimes/${showtimeId}`).send({
-      movie_id: new mongoose.Types.ObjectId()
-    });
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Movie does not exist');
-  });
-
-  // Prueba de PUT con room_id diferente
-  test('PUT /api/showtimes/:id should update with new room_id', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room1 = await Room.create({
-      name: 'Test Room 1',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const room2 = await Room.create({
-      name: 'Test Room 2',
-      capacity: 150,
-      type: '3D'
-    });
-
-    const createRes = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room1._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const showtimeId = createRes.body._id;
-
-    const res = await request(app).put(`/api/showtimes/${showtimeId}`).send({
-      room_id: room2._id
-    });
-
-    expect(res.statusCode).toBe(200);
     expect(res.body.room_id).toBe(room2._id.toString());
   });
 
-  // Prueba de PUT con room_id inexistente
-  test('PUT /api/showtimes/:id should fail with non-existent room_id', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const createRes = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const showtimeId = createRes.body._id;
-
-    const res = await request(app).put(`/api/showtimes/${showtimeId}`).send({
-      room_id: new mongoose.Types.ObjectId()
-    });
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Room does not exist');
-  });
-
-  // Prueba de PUT con start_time en el pasado
-  test('PUT /api/showtimes/:id should fail with past start_time', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const createRes = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const showtimeId = createRes.body._id;
-
-    const res = await request(app).put(`/api/showtimes/${showtimeId}`).send({
-      start_time: new Date(Date.now() - 2 * 60 * 60 * 1000) // Hace 2 horas
-    });
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Start time must be in the future');
-  });
-
-  // Prueba de PUT donde end_time <= start_time
-  test('PUT /api/showtimes/:id should fail when updated end_time <= start_time', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const createRes = await request(app).post('/api/showtimes').send({
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    const showtimeId = createRes.body._id;
-
-    const res = await request(app).put(`/api/showtimes/${showtimeId}`).send({
-      end_time: new Date(Date.now() + 20 * 60 * 60 * 1000) // Antes del start_time actual
-    });
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'End time must be greater than start time');
-  });
-
-  // Prueba de manejo de errores: GET con DB desconectada
-  test('GET /api/showtimes should handle database errors', async () => {
-    await mongoose.connection.close();
-    
-    const res = await request(app).get('/api/showtimes');
-    expect(res.statusCode).toBe(500);
-    expect(res.body).toHaveProperty('message');
-    
-    await mongoose.connect(process.env.MONGODB_URI);
-  });
-
-  // Prueba de manejo de errores: DELETE con DB desconectada
-  test('DELETE /api/showtimes/:id should handle database errors', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    await mongoose.connection.close();
-    
-    const res = await request(app).delete(`/api/showtimes/${fakeId}`);
-    expect(res.statusCode).toBe(500);
-    
-    await mongoose.connect(process.env.MONGODB_URI);
-  });
-
-  // Prueba de manejo de errores: POST con ID inválido de movie
-  test('POST /api/showtimes should handle invalid movie_id format', async () => {
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const res = await request(app).post('/api/showtimes').send({
-      movie_id: 'invalid-id',
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    });
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message');
-  });
-
-  // Prueba de manejo de errores: PUT con ID inválido
-  test('PUT /api/showtimes/:id should handle invalid ID format', async () => {
-    const res = await request(app).put('/api/showtimes/invalid-id').send({
-      start_time: new Date(Date.now() + 48 * 60 * 60 * 1000)
-    });
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message');
-  });
 });

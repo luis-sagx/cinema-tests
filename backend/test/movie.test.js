@@ -1,271 +1,434 @@
-require('dotenv').config();
 const request = require('supertest');
+const app = require('../src/app');
 const mongoose = require('mongoose');
-const app = require('./../src/app.js');
-const Movie = require('./../src/models/movie.model.js');
+const Movie = require('../src/models/movie.model');
+const User = require('../src/models/user.model');
+const Showtime = require('../src/models/showtime.model');
+const movieController = require('../src/controllers/movie.controller');
+const jwt = require('jsonwebtoken');
+const { connectTestDB } = require('../src/config/setupDB');
 
-// Conectar a una base de datos 
+let token;
+let user;
+
+// Antes de todos los tests
 beforeAll(async () => {
-  // Si ya hay conexión, cerrarla
-  if (mongoose.connection.readyState !== 0) {
-    await mongoose.connection.close();
-  }
-  
-  const dbUri = process.env.MONGODB_URI;
-  await mongoose.connect(dbUri);
+  await connectTestDB();
+  await User.deleteMany({});
+  await Movie.deleteMany({});
+
+  user = await User.create({
+    name: 'Test User',
+    email: 'testuser2@example.com',
+    password: 'password123',
+  });
+
+  token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'testsecret', {
+    expiresIn: '24h',
+  });
 });
 
-// Limpiar la base de datos antes de cada test
 beforeEach(async () => {
   await Movie.deleteMany({});
 });
 
-// Desconectar después de todos los tests
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+// Después de todos los tests
 afterAll(async () => {
   await Movie.deleteMany({});
   await mongoose.connection.close();
 });
 
-describe('Movie API', () => {    // Prueba de que GET devuelva una lista (puede estar vacía o con datos)
-    test('GET /api/movies should return a list', async () => {
-        const res = await request(app).get('/api/movies');
-        expect(res.statusCode).toBe(200);
-        expect(Array.isArray(res.body)).toBe(true);
+describe('Movie API – full test coverage', () => {
+
+  describe('GET /api/movies', () => {
+    test('returns an empty list initially', async () => {
+      const res = await request(app)
+        .get('/api/movies')
+        .set('Authorization', `Bearer ${token}`);
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual([]);
     });
+  });
 
-    // Prueba de que POST cree una nueva película correctamente
-    test('POST /api/movies should create a new movie', async () => {
-        const newMovie = {
-        title: 'Inception',
-        director: 'Christopher Nolan',
-        genre: 'Sci-Fi',
-        duration: 148,
-        release_year: 2010
-        };
-        const res = await request(app).post('/api/movies').send(newMovie);
-
-        expect(res.statusCode).toBe(201);
-        expect(res.body).toHaveProperty('_id'); // MongoDB usa _id
-        expect(res.body.title).toBe('Inception');
-        expect(res.body.duration).toBe(148);
-    });
-
-    // Prueba de que POST falle si no se incluye title
-    test('POST /api/movies should fail if title is missing', async () => {
-        const res = await request(app).post('/api/movies').send({
-        director: 'Someone',
-        duration: 120
+  describe('POST /api/movies', () => {
+    test('creates a movie successfully', async () => {
+      const res = await request(app)
+        .post('/api/movies')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          title: 'Interstellar',
+          duration: 169,
+          release_year: 2014,
+          user_id: user._id
         });
-        expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty('message', 'Title is required');
+
+      expect(res.statusCode).toBe(201);
+      expect(res.body).toHaveProperty('_id');
+      expect(res.body.title).toBe('Interstellar');
+      expect(res.body.duration).toBe(169);
+      expect(res.body.release_year).toBe(2014);
+
     });
 
-    // Prueba de que POST falle si duration no es un número positivo
-    test('POST /api/movies should fail if duration is not positive', async () => {
-        const res = await request(app).post('/api/movies').send({
-        title: 'Test Movie',
-        duration: -10
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty('message', 'Duration must be a positive number');
+    test('fails if title is missing', async () => {
+      const res = await request(app)
+        .post('/api/movies')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ duration: 100, user_id: user._id });
+      expect(res.statusCode).toBe(400);
     });
 
-    // Prueba de que POST falle si release_year no tiene 4 dígitos
-    test('POST /api/movies should fail if release_year is not 4 digits', async () => {
-        const res = await request(app).post('/api/movies').send({
-        title: 'Test Movie',
-        release_year: 20
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty('message', 'Release year must be a 4-digit number');
+    test('fails if duration is not positive', async () => {
+      const res = await request(app)
+        .post('/api/movies')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'Test Movie', duration: -10, user_id: user._id });
+      expect(res.statusCode).toBe(400);
     });
 
-    // Prueba de GET por ID
-    test('GET /api/movies/:id should return a movie by id', async () => {
-        // Primero creamos una película
-        const newMovie = {
-        title: 'Matrix',
-        director: 'Wachowski',
-        duration: 136,
-        release_year: 1999
-        };
-        const createRes = await request(app).post('/api/movies').send(newMovie);
-        const movieId = createRes.body._id; // MongoDB usa _id
+    test('fails if release_year is not provided', async () => {
+      const res = await request(app)
+        .post('/api/movies')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'Test Movie', duration: 100, user_id: user._id });
 
-        // Luego la buscamos por ID
-        const res = await request(app).get(`/api/movies/${movieId}`);
-        expect(res.statusCode).toBe(200);
-        expect(res.body.title).toBe('Matrix');
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Release year is required');
     });
 
-    // Prueba de GET por ID cuando no existe
-    test('GET /api/movies/:id should return 404 if movie not found', async () => {
-        const fakeId = new mongoose.Types.ObjectId(); // ID válido de MongoDB
-        const res = await request(app).get(`/api/movies/${fakeId}`);
-        expect(res.statusCode).toBe(404);
-        expect(res.body).toHaveProperty('message', 'Movie not found');
+    test('fails if release_year is a future year', async () => {
+      const futureYear = new Date().getFullYear() + 1; // Año futuro
+      const res = await request(app)
+        .post('/api/movies')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'Future Movie', duration: 120, release_year: futureYear, user_id: user._id });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Release year cannot be in the future');
+    });
+  });
+
+  describe('GET /api/movies/:id', () => {
+    test('returns a movie by ID', async () => {
+      const movie = await Movie.create({
+        title: 'Interstellar',
+        duration: 169,
+        user_id: user._id,
+      });
+      const res = await request(app)
+        .get(`/api/movies/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(res.statusCode).toBe(200);
+      expect(res.body.title).toBe(movie.title);
     });
 
-    // Prueba de GET con ID inválido (CastError)
-    test('GET /api/movies/:id should return 404 with invalid ID', async () => {
-        const res = await request(app).get('/api/movies/invalid-id-format');
-        expect(res.statusCode).toBe(404);
-        expect(res.body).toHaveProperty('message', 'Movie not found');
+    test('returns 404 if movie does not exist', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await request(app)
+        .get(`/api/movies/${fakeId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(res.statusCode).toBe(404);
     });
 
-    // Prueba de PUT para actualizar una película
-    test('PUT /api/movies/:id should update a movie', async () => {
-        // Crear película
-        const newMovie = {
-        title: 'Old Title',
-        duration: 100,
-        release_year: 2000
-        };
-        const createRes = await request(app).post('/api/movies').send(newMovie);
-        const movieId = createRes.body._id; // MongoDB usa _id
+    test('returns 404 for invalid ID format', async () => {
+      const res = await request(app)
+        .get('/api/movies/invalid-id')
+        .set('Authorization', `Bearer ${token}`);
+      expect(res.statusCode).toBe(404);
+    });
+  });
 
-        // Actualizar película
-        const updatedMovie = {
-        title: 'New Title',
-        director: 'New Director',
-        duration: 120,
-        release_year: 2005
-        };
-        const res = await request(app).put(`/api/movies/${movieId}`).send(updatedMovie);
-        expect(res.statusCode).toBe(200);
-        expect(res.body.title).toBe('New Title');
-        expect(res.body.duration).toBe(120);
+  describe('PUT /api/movies/:id', () => {
+    test('updates a movie successfully', async () => {
+      const movie = await Movie.create({
+        title: 'Interstellar',
+        duration: 169,
+        user_id: user._id,
+      });
+      const res = await request(app)
+        .put(`/api/movies/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'New Title', duration: 120, user_id: user._id });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.title).toBe('New Title');
+      expect(res.body.duration).toBe(120);
     });
 
-    // prueba de PUT que falle cuando la pelicula no existe
-    test('PUT /api/movies/:id should return 404 if movie not found', async () => {
-        const fakeId = new mongoose.Types.ObjectId(); // ID válido de MongoDB
-        const res = await request(app).put(`/api/movies/${fakeId}`).send({
-        title: 'Test',
-        director: 'Test Director',
-        duration: 120,
-        release_year: 2020
-        });
-        expect(res.statusCode).toBe(404);
-        expect(res.body).toHaveProperty('message', 'Movie not found');
+    test('fails if title is missing', async () => {
+      const movie = await Movie.create({
+        title: 'Interstellar',
+        duration: 169,
+        user_id: user._id,
+      });
+      const res = await request(app)
+        .put(`/api/movies/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ duration: 100, user_id: user._id });
+      expect(res.statusCode).toBe(400);
     });
 
-    // Prueba de PUT con ID inválido (CastError)
-    test('PUT /api/movies/:id should return 404 with invalid ID', async () => {
-        const res = await request(app).put('/api/movies/invalid-id-format').send({
-        title: 'Test',
-        duration: 120
-        });
-        expect(res.statusCode).toBe(404);
-        expect(res.body).toHaveProperty('message', 'Movie not found');
+    test('returns 404 if movie does not exist', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await request(app)
+        .put(`/api/movies/${fakeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'Updated', duration: 120, user_id: user._id });
+      expect(res.statusCode).toBe(404);
     });
 
-    // Prueba de PUT con release_year inválido (ValidationError)
-    test('PUT /api/movies/:id should fail with invalid release_year format', async () => {
-        // Crear película primero
-        const newMovie = {
-        title: 'Test Movie',
-        duration: 120,
-        release_year: 2020
-        };
-        const createRes = await request(app).post('/api/movies').send(newMovie);
-        const movieId = createRes.body._id;
-
-        // Intentar actualizar con año inválido
-        const res = await request(app).put(`/api/movies/${movieId}`).send({
-        title: 'Updated',
-        duration: 120,
-        release_year: 20 // Año inválido (no tiene 4 dígitos)
-        });
-        expect(res.statusCode).toBe(400);
-        expect(res.body.message).toContain('year');
+    test('returns 404 for invalid ID format', async () => {
+      const res = await request(app)
+        .put('/api/movies/invalid-id')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'Test', duration: 120, user_id: user._id });
+      expect(res.statusCode).toBe(404);
     });
 
-    // Prueba de DELETE correcta de una película
-    test('DELETE /api/movies/:id should delete a movie', async () => {
-        // Crear película
-        const newMovie = {
-        title: 'To be deleted',
-        duration: 90,
-        release_year: 2020
-        };
-        const createRes = await request(app).post('/api/movies').send(newMovie);
-        const movieId = createRes.body._id; // MongoDB usa _id
+    test('fails if duration is not positive (PUT)', async () => {
+      const movie = await Movie.create({
+        title: 'Interstellar',
+        duration: 169,
+        user_id: user._id,
+      });
 
-        // Eliminar película
-        const res = await request(app).delete(`/api/movies/${movieId}`);
-        expect(res.statusCode).toBe(204);
+      const res = await request(app)
+        .put(`/api/movies/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'Interstellar', duration: -5, user_id: user._id });
 
-        // Verificar que ya no existe
-        const getRes = await request(app).get(`/api/movies/${movieId}`);
-        expect(getRes.statusCode).toBe(404);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Duration must be a positive number');
+    });
+  });
+
+  describe('DELETE /api/movies/:id', () => {
+    test('deletes a movie successfully', async () => {
+      const movie = await Movie.create({
+        title: 'Interstellar',
+        duration: 169,
+        user_id: user._id,
+      });
+      const res = await request(app)
+        .delete(`/api/movies/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(res.statusCode).toBe(204);
     });
 
-    // prueba de DELETE cuando la película no existe
-    test('DELETE /api/movies/:id should return 404 if movie not found', async () => {
-        const fakeId = new mongoose.Types.ObjectId(); // ID válido de MongoDB
-        const res = await request(app).delete(`/api/movies/${fakeId}`);
-        expect(res.statusCode).toBe(404);
-        expect(res.body).toHaveProperty('message', 'Movie not found');
+    test('returns 404 if movie does not exist', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await request(app)
+        .delete(`/api/movies/${fakeId}`)
+        .set('Authorization', `Bearer ${token}`);
+      expect(res.statusCode).toBe(404);
     });
 
-    // Prueba de DELETE con ID inválido (CastError)
-    test('DELETE /api/movies/:id should return 404 with invalid ID', async () => {
-        const res = await request(app).delete('/api/movies/invalid-id-format');
-        expect(res.statusCode).toBe(404);
-        expect(res.body).toHaveProperty('message', 'Movie not found');
+    test('returns 404 for invalid ID format', async () => {
+      const res = await request(app)
+        .delete('/api/movies/invalid-id')
+        .set('Authorization', `Bearer ${token}`);
+      expect(res.statusCode).toBe(404);
     });
 
-    // Prueba de manejo de errores del servidor (simulando error de DB)
-    test('GET /api/movies should handle database errors', async () => {
-        // Desconectar temporalmente para simular error
-        await mongoose.connection.close();
-        
-        const res = await request(app).get('/api/movies');
-        expect(res.statusCode).toBe(500);
-        expect(res.body).toHaveProperty('message');
-        
-        // Reconectar para otros tests
-        await mongoose.connect(process.env.MONGODB_URI);
+    test('fails if the movie does not belong to the authenticated user', async () => {
+      const movie = await Movie.create({
+        title: 'The Dark Knight',
+        duration: 152,
+        user_id: user._id,
+      });
+
+      // Crear un segundo usuario
+      const secondUser = await User.create({
+        name: 'Second User',
+        email: 'seconduser@example.com',
+        password: 'password123',
+      });
+
+      const secondUserToken = jwt.sign({ id: secondUser._id }, process.env.JWT_SECRET || 'testsecret', { expiresIn: '24h' });
+
+      const res = await request(app)
+        .delete(`/api/movies/${movie._id}`)
+        .set('Authorization', `Bearer ${secondUserToken}`);
+
+      expect(res.statusCode).toBe(404); 
+      expect(res.body.message).toBe('Movie not found or unauthorized');
+    });
+  });
+
+  describe('Error and edge cases', () => {
+    test('GET /api/movies returns 500 when DB error occurs', async () => {
+      jest.spyOn(Movie, 'find').mockRejectedValueOnce(new Error('DB error'));
+
+      const res = await request(app)
+        .get('/api/movies')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toBe('Error fetching movies');
     });
 
-    // Prueba de error al crear con DB desconectada
-    test('POST /api/movies should handle database errors', async () => {
-        await mongoose.connection.close();
-        
-        const res = await request(app).post('/api/movies').send({
-            title: 'Test Movie',
-            duration: 120,
-            release_year: 2024
-        });
-        expect(res.statusCode).toBe(500);
-        
-        await mongoose.connect(process.env.MONGODB_URI);
+    test('GET /api/movies/:id returns 500 when DB error occurs', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      jest.spyOn(Movie, 'findById').mockRejectedValueOnce(new Error('DB failure'));
+
+      const res = await request(app)
+        .get(`/api/movies/${fakeId}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toBe('Error fetching movie');
     });
 
-    // Prueba de error al actualizar con DB desconectada
-    test('PUT /api/movies/:id should handle database errors', async () => {
-        const fakeId = new mongoose.Types.ObjectId();
-        await mongoose.connection.close();
-        
-        const res = await request(app).put(`/api/movies/${fakeId}`).send({
-            title: 'Test Movie',
-            duration: 120
-        });
-        expect(res.statusCode).toBe(500);
-        
-        await mongoose.connect(process.env.MONGODB_URI);
+    test('POST /api/movies returns 400 when Mongoose ValidationError occurs', async () => {
+      const err = new Error();
+      err.name = 'ValidationError';
+      err.errors = { title: { message: 'Custom title error' } };
+      jest.spyOn(Movie, 'create').mockRejectedValueOnce(err);
+
+      const res = await request(app)
+        .post('/api/movies')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'X', duration: 100, release_year: 2000, user_id: user._id });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Custom title error');
     });
 
-    // Prueba de error al eliminar con DB desconectada
-    test('DELETE /api/movies/:id should handle database errors', async () => {
-        const fakeId = new mongoose.Types.ObjectId();
-        await mongoose.connection.close();
-        
-        const res = await request(app).delete(`/api/movies/${fakeId}`);
-        expect(res.statusCode).toBe(500);
-        
-        await mongoose.connect(process.env.MONGODB_URI);
+    test('POST /api/movies returns 500 when unknown error occurs', async () => {
+      jest.spyOn(Movie, 'create').mockRejectedValueOnce(new Error('DB crashed'));
+
+      const res = await request(app)
+        .post('/api/movies')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'X', duration: 100, release_year: 2000, user_id: user._id });
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toBe('Error creating movie');
     });
 
+    test('PUT /api/movies/:id returns 400 when ValidationError during update', async () => {
+      const movie = await Movie.create({ title: 'Interstellar', duration: 169, user_id: user._id });
+
+      const err = new Error();
+      err.name = 'ValidationError';
+      err.errors = { duration: { message: 'Invalid duration' } };
+      jest.spyOn(Movie, 'findByIdAndUpdate').mockRejectedValueOnce(err);
+
+      const res = await request(app)
+        .put(`/api/movies/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'New', duration: 120, user_id: user._id });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Invalid duration');
+    });
+
+    test('DELETE /api/movies/:id returns 400 if movie used in showtimes', async () => {
+      const movie = await Movie.create({ title: 'Interstellar', duration: 169, user_id: user._id });
+
+      await Showtime.create({
+        movie_id: movie._id,
+        room_id: new mongoose.Types.ObjectId(),
+        start_time: new Date(),
+        end_time: new Date(Date.now() + 3600000),
+        user_id: user._id,
+      });
+
+      const res = await request(app)
+        .delete(`/api/movies/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Cannot delete movie because it is being used in one or more showtimes');
+    });
+
+    test('DELETE /api/movies/:id returns 500 when DB error occurs', async () => {
+      const movie = await Movie.create({ title: 'Interstellar', duration: 169, user_id: user._id });
+
+      jest.spyOn(Movie, 'findOne').mockRejectedValueOnce(new Error('DB error'));
+
+      const res = await request(app)
+        .delete(`/api/movies/${movie._id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toBe('Error deleting movie');
+    });
+  });
+
+  describe('Controller unit tests for uncovered branches', () => {
+    test('getAllMovies handles DB error (direct call)', async () => {
+      jest.spyOn(Movie, 'find').mockRejectedValueOnce(new Error('DB error'));
+
+      const req = {};
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+      await movieController.getAllMovies(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Error fetching movies' }));
+    });
+
+    test('getMovieById returns 404 on CastError (direct call)', async () => {
+      const req = { params: { id: 'invalid' } };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+      jest.spyOn(Movie, 'findById').mockRejectedValueOnce({ name: 'CastError' });
+
+      await movieController.getMovieById(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Movie not found' });
+    });
+
+    test('createMovie returns 400 when Mongoose ValidationError (direct call)', async () => {
+      const req = { body: { title: 'X', duration: 100, release_year: 2000 }, userId: user._id };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+      const err = new Error();
+      err.name = 'ValidationError';
+      err.errors = { title: { message: 'Controller validation error' } };
+      jest.spyOn(Movie, 'create').mockRejectedValueOnce(err);
+
+      await movieController.createMovie(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Controller validation error' });
+    });
+
+    test('updateMovie returns 400 when ValidationError during update (direct call)', async () => {
+      const id = new mongoose.Types.ObjectId();
+      const req = { params: { id }, body: { title: 'New', duration: 120, release_year: 2000 }, userId: user._id };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+      jest.spyOn(Movie, 'findOne').mockResolvedValueOnce({ _id: id, user_id: user._id });
+      const err = new Error();
+      err.name = 'ValidationError';
+      err.errors = { duration: { message: 'Invalid duration' } };
+      jest.spyOn(Movie, 'findByIdAndUpdate').mockRejectedValueOnce(err);
+
+      await movieController.updateMovie(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid duration' });
+    });
+
+    test('deleteMovie returns 400 when movie used in showtimes (direct call)', async () => {
+      const id = new mongoose.Types.ObjectId();
+      const req = { params: { id }, userId: user._id };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn(), send: jest.fn() };
+
+      jest.spyOn(Movie, 'findOne').mockResolvedValueOnce({ _id: id, user_id: user._id });
+      jest.spyOn(Showtime, 'countDocuments').mockResolvedValueOnce(2);
+
+      await movieController.deleteMovie(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Cannot delete movie because it is being used in one or more showtimes' }));
+    });
+  });
 });

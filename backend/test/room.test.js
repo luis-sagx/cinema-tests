@@ -1,226 +1,296 @@
-require('dotenv').config();
 const request = require('supertest');
+const app = require('../src/app');
 const mongoose = require('mongoose');
-const app = require('./../src/app.js');
-const Room = require('./../src/models/room.model.js');
+const Room = require('../src/models/room.model');
+const Showtime = require('../src/models/showtime.model');
+const User = require('../src/models/user.model');
+const jwt = require('jsonwebtoken');
+const { connectTestDB } = require('../src/config/setupDB');
 
-// Conectar a una base de datos
+let token;
+let user;
+
+// Antes de todos los tests
 beforeAll(async () => {
-  // Si ya hay conexión, cerrarla
-  if (mongoose.connection.readyState !== 0) {
-    await mongoose.connection.close();
-  }
-  
-  const dbUri = process.env.MONGODB_URI
-  await mongoose.connect(dbUri);
+  await connectTestDB();
+
+  await User.deleteMany({});
+  await Room.deleteMany({});
+
+  user = await User.create({
+    name: 'Test User',
+    email: 'testuser3@example.com',
+    password: 'password123',
+  });
+
+  token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'testsecret', {
+    expiresIn: '24h',
+  });
 });
 
-// Limpiar la base de datos antes de cada test
 beforeEach(async () => {
   await Room.deleteMany({});
+  await Showtime.deleteMany({});
 });
 
-// Desconectar después de todos los tests
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 afterAll(async () => {
   await Room.deleteMany({});
+  await Showtime.deleteMany({});
   await mongoose.connection.close();
 });
 
-describe('Room API', () => {
-  // Prueba de que GET devuelva una lista (puede estar vacía o con datos)
-  test('GET /api/rooms should return a list', async () => {
-    const res = await request(app).get('/api/rooms');
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
+// Helper para requests autenticadas
+const authRequest = (req) => req.set('Authorization', `Bearer ${token}`);
 
-  // Prueba de que POST cree una nueva sala correctamente
-  test('POST /api/rooms should create a new room', async () => {
-    const newRoom = {
-      name: 'Sala 1',
-      capacity: 100,
-      type: '2D'
-    };
-    const res = await request(app).post('/api/rooms').send(newRoom);
-    expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('_id');
-    expect(res.body.name).toBe('Sala 1');
-    expect(res.body.capacity).toBe(100);
-  });
+describe('Room API – full test coverage', () => {
 
-  // Prueba de que POST falla sin nombre
-  test('POST /api/rooms should fail if name is missing', async () => {
-    const res = await request(app).post('/api/rooms').send({
-      capacity: 50,
-      type: '3D'
+  // ================= GET /api/rooms =================
+  describe('GET /api/rooms', () => {
+    test('returns an empty list initially', async () => {
+      const res = await authRequest(request(app).get('/api/rooms'));
+      expect(res.statusCode).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBe(0);
     });
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Name is required');
-  });
 
-  // POST falla si capacidad no es positiva
-  test('POST /api/rooms should fail if capacity is not positive', async () => {
-    const res = await request(app).post('/api/rooms').send({
-      name: 'Sala X',
-      capacity: -10,
-      type: 'VIP'
+    test('returns a list of rooms', async () => {
+      await Room.create({ name: 'Room A', capacity: 50, type: '2D', user_id: user._id });
+      const res = await authRequest(request(app).get('/api/rooms'));
+      expect(res.statusCode).toBe(200);
+      expect(res.body.length).toBe(1);
+      expect(res.body[0].name).toBe('Room A');
     });
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message');
-    expect(res.body.message).toContain('The capacity must be a positive number');
-  });
 
-  // POST falla si tipo no es valido
-  test('POST /api/rooms should fail if type is invalid', async () => {
-    const res = await request(app).post('/api/rooms').send({
-      name: 'Sala Inválida',
-      capacity: 100,
-      type: '4D'
+    test('returns 500 on DB error', async () => {
+      jest.spyOn(Room, 'find').mockImplementationOnce(() => { throw new Error('boom'); });
+      const res = await authRequest(request(app).get('/api/rooms'));
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toBe('Error retrieving rooms');
     });
-    expect(res.statusCode).toBe(400);
   });
 
-  // POST falla si nombre duplicado
-  test('POST /api/rooms should fail if name is duplicated', async () => {
-    await Room.create({ name: 'Sala Duplicada', capacity: 80, type: '2D' });
-    const res = await request(app).post('/api/rooms').send({
-      name: 'Sala Duplicada',
-      capacity: 100,
-      type: '3D'
+  // ================= POST /api/rooms =================
+  describe('POST /api/rooms', () => {
+    test('creates a room successfully', async () => {
+      const res = await authRequest(request(app).post('/api/rooms').send({
+        name: 'Main Room',
+        capacity: 100,
+        type: '3D',
+        user_id: user._id,
+      }));
+      expect(res.statusCode).toBe(201);
+      expect(res.body).toHaveProperty('_id');
+      expect(res.body.name).toBe('Main Room');
     });
-    expect(res.statusCode).toBe(400);
-    expect(res.body.message).toContain('The name of the room already exists');
-  });
 
-  test('POST /api/rooms should fail if capacity is null', async () => {
-    const res = await request(app).post('/api/rooms').send({
-      name: 'Sala Null',
-      capacity: null,
-      type: '2D'
+    test('fails if name is missing', async () => {
+      const res = await authRequest(request(app).post('/api/rooms').send({
+        capacity: 50,
+        type: '2D',
+        user_id: user._id,
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Name is required');
     });
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Capacity is required');
-  });
 
-  test('POST /api/rooms should fail if type is missing', async () => {
-    const res = await request(app).post('/api/rooms').send({
-      name: 'Sala Sin Tipo',
-      capacity: 80
+    test('fails if capacity is invalid', async () => {
+      const res1 = await authRequest(request(app).post('/api/rooms').send({
+        name: 'Test Room',
+        type: '2D',
+        user_id: user._id,
+      }));
+      expect(res1.statusCode).toBe(400);
+      expect(res1.body.message).toBe('The capacity must be a positive number.');
+
+      const res2 = await authRequest(request(app).post('/api/rooms').send({
+        name: 'Test Room',
+        capacity: -5,
+        type: '2D',
+        user_id: user._id,
+      }));
+      expect(res2.statusCode).toBe(400);
+      expect(res2.body.message).toBe('The capacity must be a positive number.');
     });
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Type is required');
-  });
 
-  // GET por ID correcto
-  test('GET /api/rooms/:id should return a room by id', async () => {
-    const room = await Room.create({ name: 'Sala GET', capacity: 60, type: 'VIP' });
-    const res = await request(app).get(`/api/rooms/${room._id}`);
-    expect(res.statusCode).toBe(200);
-    expect(res.body.name).toBe('Sala GET');
-  });
+    test('fails if type is missing or invalid', async () => {
+      const res1 = await authRequest(request(app).post('/api/rooms').send({
+        name: 'Test Room',
+        capacity: 50,
+        user_id: user._id,
+      }));
+      expect(res1.statusCode).toBe(400);
+      expect(res1.body.message).toBe('Type is required');
 
-  // GET por ID inexistente
-  test('GET /api/rooms/:id should return 404 if not found', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    const res = await request(app).get(`/api/rooms/${fakeId}`);
-    expect(res.statusCode).toBe(404);
-    expect(res.body.message).toContain('Room not found');
-  });
-
-  // GET con ID inválido
-  test('GET /api/rooms/:id should return 400 if ID is invalid', async () => {
-    const res = await request(app).get('/api/rooms/invalid-id');
-    expect(res.statusCode).toBe(400);
-  });
-
-  // PUT correcto
-  test('PUT /api/rooms/:id should update a room', async () => {
-    const room = await Room.create({ name: 'Sala Editar', capacity: 40, type: '2D' });
-    const res = await request(app).put(`/api/rooms/${room._id}`).send({ capacity: 120 });
-    expect(res.statusCode).toBe(200);
-    expect(res.body.capacity).toBe(120);
-  });
-
-  // PUT no encontrado
-  test('PUT /api/rooms/:id should return 404 if room not found', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    const res = await request(app).put(`/api/rooms/${fakeId}`).send({ capacity: 99 });
-    expect(res.statusCode).toBe(404);
-  });
-
-  // PUT ID inválido
-  test('PUT /api/rooms/:id should return 400 with invalid ID', async () => {
-    const res = await request(app).put('/api/rooms/invalid-id').send({ capacity: 50 });
-    expect(res.statusCode).toBe(400);
-  });
-
-  test('PUT /api/rooms/:id should fail if no fields are provided', async () => {
-    const room = await Room.create({ name: 'Sala Update Vacía', capacity: 70, type: 'VIP' });
-    const res = await request(app).put(`/api/rooms/${room._id}`).send({});
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty(
-      'message',
-      'At least one field (name, capacity, type) is required to update'
-    );
-  });
-
-  // DELETE correcto
-  test('DELETE /api/rooms/:id should delete a room', async () => {
-    const room = await Room.create({ name: 'Sala Borrar', capacity: 50, type: '3D' });
-    const res = await request(app).delete(`/api/rooms/${room._id}`);
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toContain('Room successfully removed');
-  });
-
-  // DELETE no encontrado
-  test('DELETE /api/rooms/:id should return 404 if not found', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    const res = await request(app).delete(`/api/rooms/${fakeId}`);
-    expect(res.statusCode).toBe(404);
-  });
-
-  // DELETE con ID inválido
-  test('DELETE /api/rooms/:id should return 400 if ID invalid', async () => {
-    const res = await request(app).delete('/api/rooms/invalid-id');
-    expect(res.statusCode).toBe(400);
-  });
-
-  // Manejo de errores: GET con DB desconectada
-  test('GET /api/rooms should handle DB errors', async () => {
-    await mongoose.connection.close();
-    const res = await request(app).get('/api/rooms');
-    expect(res.statusCode).toBe(500);
-    expect(res.body).toHaveProperty('message');
-    await mongoose.connect(process.env.MONGODB_URI);
-  });
-
-  // Manejo de errores: POST con DB desconectada
-  test('POST /api/rooms should handle DB errors', async () => {
-    await mongoose.connection.close();
-    const res = await request(app).post('/api/rooms').send({
-      name: 'Sala DB',
-      capacity: 10,
-      type: '2D'
+      const res2 = await authRequest(request(app).post('/api/rooms').send({
+        name: 'Test Room',
+        capacity: 50,
+        type: '4D',
+        user_id: user._id,
+      }));
+      expect(res2.statusCode).toBe(400);
+      expect(res2.body.message).toBe('Invalid type, must be 2D, 3D or VIP');
     });
-    expect(res.statusCode).toBe(500);
-    await mongoose.connect(process.env.MONGODB_URI);
+
+    test('fails if room name is duplicated', async () => {
+      await Room.create({ name: 'Duplicate', capacity: 80, type: '2D', user_id: user._id });
+      const res = await authRequest(request(app).post('/api/rooms').send({
+        name: 'Duplicate',
+        capacity: 60,
+        type: '3D',
+        user_id: user._id,
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('The name of the room already exists');
+    });
+
+    test('fails if capacity is null', async () => {
+      const res = await authRequest(request(app).post('/api/rooms').send({
+        name: 'Null Capacity Room',
+        capacity: null,
+        type: '2D',
+        user_id: user._id,
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Capacity is required');
+    });
+
+    test('returns 500 on unexpected DB error', async () => {
+      jest.spyOn(Room, 'create').mockImplementationOnce(() => { throw new Error('boom'); });
+      const res = await authRequest(request(app).post('/api/rooms').send({
+        name: 'Main Room',
+        capacity: 100,
+        type: '3D',
+        user_id: user._id,
+      }));
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toBe('Error creating room');
+    });
   });
 
-  // Manejo de errores: PUT con DB desconectada
-  test('PUT /api/rooms/:id should handle DB errors', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    await mongoose.connection.close();
-    const res = await request(app).put(`/api/rooms/${fakeId}`).send({ capacity: 10 });
-    expect(res.statusCode).toBe(500);
-    await mongoose.connect(process.env.MONGODB_URI);
+  // ================= GET /api/rooms/:id =================
+  describe('GET /api/rooms/:id', () => {
+    test('returns a room by ID', async () => {
+      const room = await Room.create({ name: 'Room GET', capacity: 60, type: 'VIP', user_id: user._id });
+      const res = await authRequest(request(app).get(`/api/rooms/${room._id}`));
+      expect(res.statusCode).toBe(200);
+      expect(res.body.name).toBe('Room GET');
+    });
+
+    test('returns 404 if room does not exist', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await authRequest(request(app).get(`/api/rooms/${fakeId}`));
+      expect(res.statusCode).toBe(404);
+      expect(res.body.message).toContain('Room not found');
+    });
+
+    test('returns 400 for invalid ID', async () => {
+      const res = await authRequest(request(app).get('/api/rooms/invalid-id'));
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Invalid ID');
+    });
+
+    test('returns 500 on DB error', async () => {
+      jest.spyOn(Room, 'findOne').mockImplementationOnce(() => { throw new Error('boom'); });
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await authRequest(request(app).get(`/api/rooms/${fakeId}`));
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toBe('Error retrieving room');
+    });
   });
 
-  // Manejo de errores: DELETE con DB desconectada
-  test('DELETE /api/rooms/:id should handle DB errors', async () => {
-    const fakeId = new mongoose.Types.ObjectId();
-    await mongoose.connection.close();
-    const res = await request(app).delete(`/api/rooms/${fakeId}`);
-    expect(res.statusCode).toBe(500);
-    await mongoose.connect(process.env.MONGODB_URI);
+  // ================= PUT /api/rooms/:id =================
+  describe('PUT /api/rooms/:id', () => {
+    test('updates a room successfully', async () => {
+      const room = await Room.create({ name: 'Old Room', capacity: 40, type: '2D', user_id: user._id });
+      const res = await authRequest(request(app).put(`/api/rooms/${room._id}`).send({
+        name: 'Updated Room',
+        capacity: 45,
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(res.body.name).toBe('Updated Room');
+      expect(res.body.capacity).toBe(45);
+    });
+
+    test('fails if no fields are provided', async () => {
+      const room = await Room.create({ name: 'Empty Update', capacity: 70, type: 'VIP', user_id: user._id });
+      const res = await authRequest(request(app).put(`/api/rooms/${room._id}`).send({}));
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('At least one field (name, capacity, type) is required to update');
+    });
+
+    test('returns 404 if room does not exist', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await authRequest(request(app).put(`/api/rooms/${fakeId}`).send({ capacity: 90 }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    test('returns 400 for invalid ID', async () => {
+      const res = await authRequest(request(app).put('/api/rooms/invalid-id').send({ capacity: 50 }));
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Invalid ID');
+    });
+
+    test('returns 404 if update does not return the room (race condition)', async () => {
+      const room = await Room.create({ name: 'Race Room', capacity: 40, type: '2D', user_id: user._id });
+      jest.spyOn(Room, 'findByIdAndUpdate').mockImplementationOnce(() => null);
+      const res = await authRequest(request(app).put(`/api/rooms/${room._id}`).send({ name: 'New Name' }));
+      expect(res.statusCode).toBe(404);
+      expect(res.body.message).toBe('Room not found');
+    });
+
+    test('returns 500 on DB error during update', async () => {
+      jest.spyOn(Room, 'findOne').mockImplementationOnce(() => { throw new Error('boom'); });
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await authRequest(request(app).put(`/api/rooms/${fakeId}`).send({ capacity: 90 }));
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toBe('Error updating the room');
+    });
+  });
+
+  // ================= DELETE /api/rooms/:id =================
+  describe('DELETE /api/rooms/:id', () => {
+    test('deletes a room successfully', async () => {
+      const room = await Room.create({ name: 'Delete Room', capacity: 50, type: '3D', user_id: user._id });
+      const res = await authRequest(request(app).delete(`/api/rooms/${room._id}`));
+      expect(res.statusCode).toBe(200);
+    });
+
+    test('returns 404 if room does not exist', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await authRequest(request(app).delete(`/api/rooms/${fakeId}`));
+      expect(res.statusCode).toBe(404);
+    });
+
+    test('returns 400 for invalid ID', async () => {
+      const res = await authRequest(request(app).delete('/api/rooms/invalid-id'));
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Invalid ID');
+    });
+
+    test('cannot delete a room used in showtimes (movie_id check)', async () => {
+      const room = await Room.create({ name: 'Used Room', capacity: 30, type: '2D', user_id: user._id });
+      await Showtime.create({
+        movie_id: room._id,
+        room_id: room._id,
+        start_time: new Date(),
+        end_time: new Date(Date.now() + 3600000),
+        user_id: user._id,
+      });
+      const res = await authRequest(request(app).delete(`/api/rooms/${room._id}`));
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Cannot delete room because it is being used in one or more showtimes');
+    });
+
+    test('returns 500 on DB error during delete', async () => {
+      jest.spyOn(Room, 'findOne').mockImplementationOnce(() => { throw new Error('boom'); });
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await authRequest(request(app).delete(`/api/rooms/${fakeId}`));
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toBe('Error deleting room');
+    });
   });
 });

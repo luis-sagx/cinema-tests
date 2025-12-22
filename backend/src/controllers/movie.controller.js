@@ -52,6 +52,10 @@ async function createMovie(req, res) {
       return res.status(400).json({ message: 'Duration must be a positive number' });
     }
 
+    if (!release_year) {
+      return res.status(400).json({ message: 'Release year is required' });
+    }
+
     // Crear la película con el user_id del usuario autenticado
     const newMovie = await Movie.create({
       title,
