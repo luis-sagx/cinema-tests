@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZAP por Informe de Escaneo Checkmarx</title>
+<link
+	href="2025-12-23-ZAP-Report-/normalize/normalize.css" rel="stylesheet">
+<link
+	href="2025-12-23-ZAP-Report-/themes/original/main.css" rel="stylesheet">
+<link
+	href="2025-12-23-ZAP-Report-/themes/original/colors.css" rel="stylesheet">
+</head>
+<body>
+	<header>
+		<h1>ZAP por Informe de Escaneo Checkmarx</h1>
+		<p>
+			<span>Generated with</span> <a href="https://zaproxy.org"><img
+				src="2025-12-23-ZAP-Report-/zap32x32.png" alt="The ZAP logo" class="zap-logo">ZAP</a>
+			<span>on mar 23 dic 2025, at 21:50:18</span>
+		</p>
+		<p>ZAP Versión: 2.17.0</p>
+		<p>
+			ZAP by <a href="https://checkmarx.com/">Checkmarx</a>
+		</p>
+	</header>
+
+	<main>
+
+		<section id="contents" class="contents">
+			<h2>Contents</h2>
+			<nav>
+				<ol>
+					<li><a
+						href="#about-this-report">About This Report</a>
+						<ol>
+							
+							<li><a
+								href="#report-parameters">Report Parameters</a></li>
+						</ol></li>
+					<data-th-block>
+					<li><a
+						href="#summaries">Summaries</a>
+						<ol>
+							<li><a
+								href="#risk-confidence-counts">Alert Counts by Risk and Confidence</a></li>
+							<li><a
+								href="#site-risk-counts">Alert Counts by Site and Risk</a></li>
+							<li><a
+								href="#alert-type-counts">Alert Counts by Alert Type</a></li>
+							<li><a
+								href="#insights">Insights</a></li>
+						</ol></li>
+					<li><a
+						href="#alerts">Alerts</a>
+						<ol>
+							
+							 
+							 
+							
+							
+							
+							
+							
+							
+							<li><a
+								href="#alerts--risk-1-confidence-2"><span>Risk</span>=<span
+									class="risk-level">Bajo</span>, <span>Confidence</span>=<span
+									class="confidence-level">Media</span> <span>(2)</span></a></li>
+							
+							
+							  
+							
+							
+							
+							
+							<li><a
+								href="#alerts--risk-0-confidence-3"><span>Risk</span>=<span
+									class="risk-level">Informativo</span>, <span>Confidence</span>=<span
+									class="confidence-level">Alta</span> <span>(1)</span></a></li>
+							
+							<li><a
+								href="#alerts--risk-0-confidence-2"><span>Risk</span>=<span
+									class="risk-level">Informativo</span>, <span>Confidence</span>=<span
+									class="confidence-level">Media</span> <span>(1)</span></a></li>
+							
+							
+							  
+						</ol></li>
+					<li><a
+						href="#appendix">Appendix</a>
+						<ol>
+							<li><a
+								href="#alert-types">Alert Types</a></li>
+						</ol></li>
+					</data-th-block>
+				</ol>
+			</nav>
+		</section>
+
+		<section
+			id="about-this-report" class="about-this-report">
+			<h2>About This Report</h2>
+
+			
+
+			<section
+				id="report-parameters">
+				<h3>Report Parameters</h3>
+				<div class="report-parameters--container">
+					<h4>Contexts</h4>
+					
+					
+					<p>No contexts were selected, so all contexts were included by default.</p>
+					  
+
+					<h4>Sites</h4>
+					
+					<p>The following sites were included:</p>
+					<ul class="sites-list">
+						<li><span class="site">https://www.google.com</span></li>
+						<li><span class="site">https://accounts.google.com</span></li>
+						<li><span class="site">http://localhost:3000</span></li>
+					</ul>
+					
+					<p>(If no sites were selected, all sites were included by default.)</p>
+					<p>An included site must also be within one of the included contexts for its data to be included in the report.</p>
+
+					<h4>Risk levels</h4>
+					<p>
+						<span>Included</span>:
+						 
+						<span class="included-risk-codes"><span class="risk-level">Alto</span>, <span class="risk-level">Medio</span>, <span class="risk-level">Bajo</span>, <span class="risk-level">Informativo</span></span>
+					</p>
+					<p>
+						<span>Excluded</span>:
+						 <span>None</span>
+						
+					</p>
+
+					<h4>Confidence levels</h4>
+					<p>
+						<span>Included</span>:
+						
+						
+						<span class="included-confidence-codes"><span class="confidence-level">Confirmado por Usuario</span>, <span class="confidence-level">Alta</span>, <span class="confidence-level">Media</span>, <span class="confidence-level">Baja</span></span>
+					</p>
+					<p>
+						<span>Excluded</span>:
+						
+						
+						<span class="included-confidence-codes"> <span class="confidence-level">Confirmado por Usuario</span>, <span class="confidence-level">Alta</span>, <span class="confidence-level">Media</span>, <span class="confidence-level">Baja</span>, <span class="confidence-level">Falso positivo</span></span>
+					</p>
+				</div>
+			</section>
+		</section>
+
+		
+		<section>
+			
+		</section>
+		
+		<section id="summaries" class="summaries">
+			<h2>Summaries</h2>
+
+			<section
+				id="risk-confidence-counts">
+				<h3>Alert Counts by Risk and Confidence</h3>
+				<table class="risk-confidence-counts-table">
+					<caption>
+						<p>This table shows the number of alerts for each level of risk and confidence included in the report.</p>
+						<p>(The percentages in brackets represent the count as a percentage of the total number of alerts included in the report, rounded to one decimal place.)</p>
+					</caption>
+					<colgroup>
+						<col>
+						<col>
+					</colgroup>
+					<colgroup>
+						<col
+							style="width: 14.0%"><col
+							style="width: 14.0%"><col
+							style="width: 14.0%"><col
+							style="width: 14.0%">
+						<col style="width: 14.0%">
+					</colgroup>
+					<thead>
+						<tr>
+							<td colspan="2" rowspan="2"></td>
+							<th scope="colgroup"
+								colspan="5">Confidence</th>
+						</tr>
+						<tr>
+							<th scope="col">Confirmado por Usuario</th>
+							<th scope="col">Alta</th>
+							<th scope="col">Media</th>
+							<th scope="col">Baja</th>
+							<th scope="col">Total</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="rowgroup"
+								rowspan="5">Risk</th>
+							<th scope="row">Alto</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span class="additional-info-percentages">(0,0 %)</span></td>
+						</tr>
+						<tr>
+							
+							<th scope="row">Medio</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span class="additional-info-percentages">(0,0 %)</span></td>
+						</tr>
+						<tr>
+							
+							<th scope="row">Bajo</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>2</span><br> <span
+								class="additional-info-percentages">(50,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>2</span><br> <span class="additional-info-percentages">(50,0 %)</span></td>
+						</tr>
+						<tr>
+							
+							<th scope="row">Informativo</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>1</span><br> <span
+								class="additional-info-percentages">(25,0 %)</span></td>
+							<td><span>1</span><br> <span
+								class="additional-info-percentages">(25,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>2</span><br> <span class="additional-info-percentages">(50,0 %)</span></td>
+						</tr>
+						<tr>
+							<th scope="row">Total</th>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>1</span><br> <span
+								class="additional-info-percentages">(25,0 %)</span></td>
+							<td><span>3</span><br> <span
+								class="additional-info-percentages">(75,0 %)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0,0 %)</span></td>
+							<td><span>4</span><br> <span
+								class="additional-info-percentages">(100%)</span></td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section
+				id="site-risk-counts">
+				<h3>Alert Counts by Site and Risk</h3>
+				<table class="site-risk-counts-table">
+					<caption>
+						<p>This table shows, for each site for which one or more alerts were raised, the number of alerts raised at each risk level.</p>
+						<p>Alerts with a confidence level of &quot;False Positive&quot; have been excluded from these counts.</p>
+						<p>(The numbers in brackets are the number of alerts raised for the site at or above that risk level.)</p>
+					</caption>
+					<colgroup>
+						<col>
+						<col>
+					</colgroup>
+					<colgroup>
+						<col
+							style="width: 16.25%"><col
+							style="width: 16.25%"><col
+							style="width: 16.25%"><col
+							style="width: 16.25%">
+					</colgroup>
+					<thead>
+						<tr>
+							<td colspan="2" rowspan="2"></td>
+							<th scope="colgroup" colspan="4">Risk</th>
+						</tr>
+						<tr>
+							<th scope="col">
+								<span>Alto</span><br>  <span
+									class="additional-info-percentages">(= Alto)</span>  
+							</th>
+							<th scope="col">
+								<span>Medio</span><br>   <span
+									class="additional-info-percentages">(&gt;= Medio)</span> 
+							</th>
+							<th scope="col">
+								<span>Bajo</span><br>   <span
+									class="additional-info-percentages">(&gt;= Bajo)</span> 
+							</th>
+							<th scope="col">
+								<span>Informativo</span><br>   <span
+									class="additional-info-percentages">(&gt;= Informativo)</span> 
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="rowgroup"
+								rowspan="1">Site</th>
+							<th scope="row">http://localhost:3000</th>
+							
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0)</span></td>
+							<td><span>0</span><br> <span
+								class="additional-info-percentages">(0)</span></td>
+							<td><span>2</span><br> <span
+								class="additional-info-percentages">(2)</span></td>
+							<td><span>2</span><br> <span
+								class="additional-info-percentages">(4)</span></td>
+							
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section
+				id="alert-type-counts">
+				<h3>Alert Counts by Alert Type</h3>
+				<table class="alert-type-counts-table">
+					<caption>
+						<p>This table shows the number of alerts of each alert type, together with the alert type&#39;s risk level.</p>
+						<p>(The percentages in brackets represent each count as a percentage, rounded to one decimal place, of the total number of alerts included in this report.)</p>
+					</caption>
+					<thead>
+						<tr>
+							<th scope="col">Alert type</th>
+							<th scope="col">Risk</th>
+							<th scope="col">Count</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row"><a
+								href="#alert-type-0">El servidor divulga información mediante un campo(s) de encabezado de respuesta HTTP &#39;&#39;&#39;&#39;X-Powered-By&#39;&#39;&#39;&#39;</a></th>
+							<td class="risk-level">Bajo</td>
+							<td><span>5</span><br> <span
+								class="additional-info-percentages">(125,0 %)</span></td>
+						</tr>
+						<tr>
+							<th scope="row"><a
+								href="#alert-type-1">Falta encabezado X-Content-Type-Options</a></th>
+							<td class="risk-level">Bajo</td>
+							<td><span>5</span><br> <span
+								class="additional-info-percentages">(125,0 %)</span></td>
+						</tr>
+						<tr>
+							<th scope="row"><a
+								href="#alert-type-2">Petición de Autenticación Identificada</a></th>
+							<td class="risk-level">Informativo</td>
+							<td><span>1</span><br> <span
+								class="additional-info-percentages">(25,0 %)</span></td>
+						</tr>
+						<tr>
+							<th scope="row"><a
+								href="#alert-type-3">Respuesta de Gestión de Sesión Identificada</a></th>
+							<td class="risk-level">Informativo</td>
+							<td><span>2</span><br> <span
+								class="additional-info-percentages">(50,0 %)</span></td>
+						</tr>
+					</tbody>
+					<tfoot>
+						<tr>
+							<th scope="row">Total</th>
+							<td></td>
+							<td>4</td>
+						</tr>
+					</tfoot>
+				</table>
+			</section>
+			
+			<section
+				id="insights">
+				<h3 class="left-header">Insights</h3>
+				<table class="insights-table">
+						<caption>
+						<p>This table shows information that is likely to be very relevant to you, but which is not related to vulnerabilities, or potentially even related to the application in question.</p>
+					</caption>
+					<thead>
+					<tr>
+						<th scope="col">Level</th>
+						<th scope="col">Reason</th>
+						<th scope="col">Site</th>
+						<th scope="col">Description</th>
+						<th scope="col">Statistic</th>
+					</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+						<td class="risk-1">
+							<div>Low</div>
+						</td>
+						<td>
+							<div>Warning</div>
+						</td>
+						<td>
+							<div></div>
+						</td>
+						<td>
+							<div>ZAP warnings logged - see the zap.log file for details</div>
+						</td>
+						<td align="center">
+							<div>1   </div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-1">
+							<div>Low</div>
+						</td>
+						<td>
+							<div>Exceeded High</div>
+						</td>
+						<td>
+							<div>http://localhost:3000</div>
+						</td>
+						<td>
+							<div>Percentage of responses with status code 4xx</div>
+						</td>
+						<td align="center">
+							<div>80 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>http://localhost:3000</div>
+						</td>
+						<td>
+							<div>Percentage of responses with status code 2xx</div>
+						</td>
+						<td align="center">
+							<div>19 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>http://localhost:3000</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with content type application/json</div>
+						</td>
+						<td align="center">
+							<div>100 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>http://localhost:3000</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with method GET</div>
+						</td>
+						<td align="center">
+							<div>85 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>http://localhost:3000</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with method POST</div>
+						</td>
+						<td align="center">
+							<div>15 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>http://localhost:3000</div>
+						</td>
+						<td>
+							<div>Count of total endpoints</div>
+						</td>
+						<td align="center">
+							<div>20   </div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Exceeded Low</div>
+						</td>
+						<td>
+							<div>http://localhost:3000</div>
+						</td>
+						<td>
+							<div>Percentage of slow responses</div>
+						</td>
+						<td align="center">
+							<div>44 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://accounts.google.com</div>
+						</td>
+						<td>
+							<div>Percentage of responses with status code 2xx</div>
+						</td>
+						<td align="center">
+							<div>100 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://accounts.google.com</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with content type application/binary</div>
+						</td>
+						<td align="center">
+							<div>100 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://accounts.google.com</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with method POST</div>
+						</td>
+						<td align="center">
+							<div>100 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://accounts.google.com</div>
+						</td>
+						<td>
+							<div>Count of total endpoints</div>
+						</td>
+						<td align="center">
+							<div>1   </div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://accounts.google.com</div>
+						</td>
+						<td>
+							<div>Percentage of slow responses</div>
+						</td>
+						<td align="center">
+							<div>50 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://www.google.com</div>
+						</td>
+						<td>
+							<div>Percentage of responses with status code 2xx</div>
+						</td>
+						<td align="center">
+							<div>100 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://www.google.com</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with content type application/x-protobuffer</div>
+						</td>
+						<td align="center">
+							<div>100 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://www.google.com</div>
+						</td>
+						<td>
+							<div>Percentage of endpoints with method GET</div>
+						</td>
+						<td align="center">
+							<div>100 %</div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://www.google.com</div>
+						</td>
+						<td>
+							<div>Count of total endpoints</div>
+						</td>
+						<td align="center">
+							<div>1   </div>
+						</td>
+						</tr>
+					
+						<tr>
+						<td class="risk-0">
+							<div>Info</div>
+						</td>
+						<td>
+							<div>Informational</div>
+						</td>
+						<td>
+							<div>https://www.google.com</div>
+						</td>
+						<td>
+							<div>Percentage of slow responses</div>
+						</td>
+						<td align="center">
+							<div>100 %</div>
+						</td>
+						</tr>
+					
+					</tbody>
+				</table>
+			</section>
+		</section>
+
+		<section id="alerts" class="alerts">
+			<h2>Alerts</h2>
+			<ol>
+				
+				 
+				 
+				 
+				
+				
+				
+				
+				<li id="alerts--risk-1-confidence-2">
+					<h3>
+						<span>Risk</span>=<span
+							class="risk-level">Bajo</span>, <span>Confidence</span>=<span
+							class="confidence-level">Media</span> <span>(2)</span>
+					</h3>
+					<ol>
+						
+						<li class="alerts--site-li">
+							<h4>
+								<span class="site">http://localhost:3000</span> <span>(2)</span>
+							</h4>
+							<ol>
+								
+								<li>
+									<h5>
+										<a
+											href="#alert-type-0">El servidor divulga información mediante un campo(s) de encabezado de respuesta HTTP &#39;&#39;&#39;&#39;X-Powered-By&#39;&#39;&#39;&#39;</a> <span>(1)</span>
+									</h5>
+									<ol>
+										<li><details>
+												<summary>
+													<span class="request-method-n-url">GET http://localhost:3000/api/auth</span>
+												</summary>
+												
+<table class="alerts-table">
+	<tr>
+		<th scope="row">Alert tags</th>
+		<td>
+			<ul class="alert-tags-list">
+				<li>
+					<span><a href="https://owasp.org/Top10/A01_2021-Broken_Access_Control/">OWASP_2021_A01</a></span> 
+				</li>
+				<li>
+					<span><a href="https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework">WSTG-v42-INFO-08</a></span> 
+				</li>
+				<li>
+					 <span>POLICY_QA_STD = </span>
+				</li>
+				<li>
+					 <span>POLICY_PENTEST = </span>
+				</li>
+				<li>
+					<span><a href="https://www.zaproxy.org/docs/desktop/addons/common-library/alerttags/#systemic">SYSTEMIC</a></span> 
+				</li>
+				<li>
+					<span><a href="https://owasp.org/www-project-top-ten/2017/A3_2017-Sensitive_Data_Exposure.html">OWASP_2017_A03</a></span> 
+				</li>
+				<li>
+					<span><a href="https://cwe.mitre.org/data/definitions/497.html">CWE-497</a></span> 
+				</li>
+			</ul>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Alert description</th>
+		<td> 
+<p>El servidor de la web/aplicación está divulgando información mediante uno o más encabezados de respuesta HTTP &#39;&#39;&#39;&#39;X-Powered-By&#39;&#39;&#39;&#39;. El acceso a tal información podría facilitarle a los atacantes la identificación de otros marcos/componentes de los que su aplicación web depende y las vulnerabilidades a las que pueden estar sujetos tales componentes.</p>
+ </td>
+	</tr>
+	
+	<tr>
+		<th scope="row">Request</th>
+		<td><details open="open">
+				<summary>Request line and header section (440 bytes)</summary>
+				
+				<pre><code>GET http://localhost:3000/api/auth HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ0MzJlZWJiMDgyODg5ZDM5OTYwOGIiLCJpYXQiOjE3NjYwNzcxNzQsImV4cCI6MTc2NjA4MDc3NH0.zb-v6Jd5gGRPpud8rSV7BjgsK6-CWMD4SvnCjUOMGtk
+Content-Type: text/plain
+User-Agent: PostmanRuntime/7.51.0
+Accept: */*
+Postman-Token: da36606b-1c04-4de4-af55-a0d2a4896051
+host: localhost:3000
+Connection: keep-alive
+Content-Length: 62
+
+</code></pre>
+				
+				
+			</details> <details class="request-body" open="open">
+				<summary>Request body (62 bytes)</summary>
+				
+				<pre><code>{
+    &quot;studentId&quot;: &quot;Pablo Zurita&quot;,
+    &quot;courseId&quot;: &quot;sapo&quot;
+}</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Response</th>
+		<td><details open="open">
+				<summary>Status line and header section (348 bytes)</summary>
+				
+				<pre><code>HTTP/1.1 404 Not Found
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:4200
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Content-Type: application/json; charset=utf-8
+Content-Length: 29
+ETag: W/&quot;1d-F5hzZtsPyxiCcAo2WNqzlKw+mXk&quot;
+Date: Mon, 22 Dec 2025 15:19:23 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+</code></pre>
+				
+				
+			</details> <details class="response-body" open="open">
+				<summary>Response body (29 bytes)</summary>
+				
+				<pre><code>{&quot;message&quot;:&quot;Route not found&quot;}</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	
+	
+	<tr>
+		<th scope="row">Evidence</th>
+		<td><pre><code>X-Powered-By: Express</code></pre></td>
+	</tr>
+	<tr>
+		<th scope="row">Solution</th>
+		<td> 
+<p>Asegúrese de que su servidor web, servidor de aplicaciones, balanceador de carga, etc. está configurado para suprimir las cabeceras &quot;X-Powered-By&quot;.</p>
+ </td>
+	</tr>
+</table>
+
+											</details></li>
+									</ol>
+								</li>
+								
+								<li>
+									<h5>
+										<a
+											href="#alert-type-1">Falta encabezado X-Content-Type-Options</a> <span>(1)</span>
+									</h5>
+									<ol>
+										<li><details>
+												<summary>
+													<span class="request-method-n-url">GET http://localhost:3000/api/users</span>
+												</summary>
+												
+<table class="alerts-table">
+	<tr>
+		<th scope="row">Alert tags</th>
+		<td>
+			<ul class="alert-tags-list">
+				<li>
+					<span><a href="https://cwe.mitre.org/data/definitions/693.html">CWE-693</a></span> 
+				</li>
+				<li>
+					<span><a href="https://owasp.org/Top10/A05_2021-Security_Misconfiguration/">OWASP_2021_A05</a></span> 
+				</li>
+				<li>
+					<span><a href="https://owasp.org/www-project-top-ten/2017/A6_2017-Security_Misconfiguration.html">OWASP_2017_A06</a></span> 
+				</li>
+				<li>
+					 <span>POLICY_QA_STD = </span>
+				</li>
+				<li>
+					 <span>POLICY_PENTEST = </span>
+				</li>
+				<li>
+					<span><a href="https://www.zaproxy.org/docs/desktop/addons/common-library/alerttags/#systemic">SYSTEMIC</a></span> 
+				</li>
+			</ul>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Alert description</th>
+		<td> 
+<p>La cabecera Anti-MIME-Sniffing X-Content-Type-Options no se ha establecido en &#39;nosniff&#39;. Esto permite que las versiones anteriores de Internet Explorer y Chrome realicen MIME-sniffing en el cuerpo de la respuesta, lo que puede provocar que el cuerpo dé la respuesta se interprete y se muestre como un tipo de contenido distinto del tipo de contenido declarado. Las versiones actuales (principios de 2014) y heredadas de Firefox utilizarán el tipo de contenido declarado (si se establece uno), en lugar de realizar MIME-sniffing.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Other info</th>
+		<td> 
+<p>Este problema aún se aplica a las páginas de tipo error (401, 403, 500, etc.), ya que esas páginas a menudo se ven afectadas por problemas de inyección, en cuyo caso aún existe la preocupación de que los navegadores husmeen las páginas lejos de su tipo de contenido real.</p>
+
+<p>En el umbral «Alto» esta regla de análisis no alertará sobre respuestas de error del cliente o servidor.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Request</th>
+		<td><details open="open">
+				<summary>Request line and header section (441 bytes)</summary>
+				
+				<pre><code>GET http://localhost:3000/api/users HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ0MzJlZWJiMDgyODg5ZDM5OTYwOGIiLCJpYXQiOjE3NjYwNzcxNzQsImV4cCI6MTc2NjA4MDc3NH0.zb-v6Jd5gGRPpud8rSV7BjgsK6-CWMD4SvnCjUOMGtk
+Content-Type: text/plain
+User-Agent: PostmanRuntime/7.51.0
+Accept: */*
+Postman-Token: fe0b7e84-7de9-423d-b708-eeb796b9f208
+host: localhost:3000
+Connection: keep-alive
+Content-Length: 62
+
+</code></pre>
+				
+				
+			</details> <details class="request-body" open="open">
+				<summary>Request body (62 bytes)</summary>
+				
+				<pre><code>{
+    &quot;studentId&quot;: &quot;Pablo Zurita&quot;,
+    &quot;courseId&quot;: &quot;sapo&quot;
+}</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Response</th>
+		<td><details open="open">
+				<summary>Status line and header section (339 bytes)</summary>
+				
+				<pre><code>HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:4200
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Content-Type: application/json; charset=utf-8
+Content-Length: 2
+ETag: W/&quot;2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w&quot;
+Date: Mon, 22 Dec 2025 15:20:51 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+</code></pre>
+				
+				
+			</details> <details class="response-body" open="open">
+				<summary>Response body (2 bytes)</summary>
+				
+				<pre><code>[]</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Parameter</th>
+		<td><pre><code>x-content-type-options</code></pre></td>
+	</tr>
+	
+	
+	<tr>
+		<th scope="row">Solution</th>
+		<td> 
+<p>Asegúrese de que la aplicación/servidor web establece el encabezado Content-Type adecuadamente, y que establece el encabezado X-Content-Type-Options a &#39;nosniff&#39; para todas las páginas web.</p>
+
+<p>Si es posible, asegúrese de que el usuario final utiliza un navegador web moderno y compatible con los estándares que no realiza MIME-sniffing en absoluto, o que puede ser dirigido por la aplicación web/servidor web para que no realice MIME-sniffing.</p>
+ </td>
+	</tr>
+</table>
+
+											</details></li>
+									</ol>
+								</li>
+								
+							</ol>
+						</li>
+						
+					</ol>
+				</li>
+				
+				
+				  
+				 
+				
+				
+				<li id="alerts--risk-0-confidence-3">
+					<h3>
+						<span>Risk</span>=<span
+							class="risk-level">Informativo</span>, <span>Confidence</span>=<span
+							class="confidence-level">Alta</span> <span>(1)</span>
+					</h3>
+					<ol>
+						
+						<li class="alerts--site-li">
+							<h4>
+								<span class="site">http://localhost:3000</span> <span>(1)</span>
+							</h4>
+							<ol>
+								
+								<li>
+									<h5>
+										<a
+											href="#alert-type-2">Petición de Autenticación Identificada</a> <span>(1)</span>
+									</h5>
+									<ol>
+										<li><details>
+												<summary>
+													<span class="request-method-n-url">POST http://localhost:3000/api/users/login</span>
+												</summary>
+												
+<table class="alerts-table">
+	<tr>
+		<th scope="row">Alert tags</th>
+		<td>
+			<ul class="alert-tags-list">
+				
+			</ul>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Alert description</th>
+		<td> 
+<p>La petición en cuestión se ha identificado como una petición de autenticación. El campo &quot;Otra información&quot; contiene un conjunto de líneas key=vvalue que identifican cualquier campo relevante. Si la solicitud está en un contexto que tiene un método de autenticación configurado como &quot;Detección automática&quot;, esta regla cambiará la autenticación para que coincida con la petición identificada.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Other info</th>
+		<td> 
+<p>userParam=email</p>
+
+<p>userValue=pablozurita@example.com</p>
+
+<p>passwordParam=password</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Request</th>
+		<td><details open="open">
+				<summary>Request line and header section (454 bytes)</summary>
+				
+				<pre><code>POST http://localhost:3000/api/users/login HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ0MzJlZWJiMDgyODg5ZDM5OTYwOGIiLCJpYXQiOjE3NjYwNzcxNzQsImV4cCI6MTc2NjA4MDc3NH0.zb-v6Jd5gGRPpud8rSV7BjgsK6-CWMD4SvnCjUOMGtk
+User-Agent: PostmanRuntime/7.51.0
+Accept: */*
+Postman-Token: 85a21ef2-614a-4129-9798-c9460cae1de4
+host: localhost:3000
+Connection: keep-alive
+Content-Length: 99
+
+</code></pre>
+				
+				
+			</details> <details class="request-body" open="open">
+				<summary>Request body (99 bytes)</summary>
+				
+				<pre><code>{
+    &quot;name&quot;: &quot;zurupe&quot;,
+    &quot;email&quot;: &quot;pablozurita@example.com&quot;,
+    &quot;password&quot;: &quot;pablozurita&quot;
+}</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Response</th>
+		<td><details open="open">
+				<summary>Status line and header section (343 bytes)</summary>
+				
+				<pre><code>HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:4200
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Content-Type: application/json; charset=utf-8
+Content-Length: 303
+ETag: W/&quot;12f-xCwRE5rNYrpCPHVe4ObsxqHuA84&quot;
+Date: Mon, 22 Dec 2025 15:54:28 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+</code></pre>
+				
+				
+			</details> <details class="response-body" open="open">
+				<summary>Response body (303 bytes)</summary>
+				
+				<pre><code>{&quot;message&quot;:&quot;Login successful&quot;,&quot;token&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NDk2MjJmOTFhZTE0MmM5Yzk1ODc0MiIsImlhdCI6MTc2NjQxODg2OCwiZXhwIjoxNzY2NTA1MjY4fQ.G0lIsmnvnvk9o_pJHx7Qne5qgEuiZNMRyoQtj_6B9W0&quot;,&quot;user&quot;:{&quot;id&quot;:&quot;6949622f91ae142c9c958742&quot;,&quot;name&quot;:&quot;zurupe&quot;,&quot;email&quot;:&quot;pablozurita@example.com&quot;}}</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Parameter</th>
+		<td><pre><code>email</code></pre></td>
+	</tr>
+	
+	<tr>
+		<th scope="row">Evidence</th>
+		<td><pre><code>password</code></pre></td>
+	</tr>
+	<tr>
+		<th scope="row">Solution</th>
+		<td> 
+<p>Se trata de una alerta informativa y no de una vulnerabilidad, por lo que no hay nada que corregir.</p>
+ </td>
+	</tr>
+</table>
+
+											</details></li>
+									</ol>
+								</li>
+								
+							</ol>
+						</li>
+						
+					</ol>
+				</li>
+				
+				<li id="alerts--risk-0-confidence-2">
+					<h3>
+						<span>Risk</span>=<span
+							class="risk-level">Informativo</span>, <span>Confidence</span>=<span
+							class="confidence-level">Media</span> <span>(1)</span>
+					</h3>
+					<ol>
+						
+						<li class="alerts--site-li">
+							<h4>
+								<span class="site">http://localhost:3000</span> <span>(1)</span>
+							</h4>
+							<ol>
+								
+								<li>
+									<h5>
+										<a
+											href="#alert-type-3">Respuesta de Gestión de Sesión Identificada</a> <span>(1)</span>
+									</h5>
+									<ol>
+										<li><details>
+												<summary>
+													<span class="request-method-n-url">POST http://localhost:3000/api/users/register</span>
+												</summary>
+												
+<table class="alerts-table">
+	<tr>
+		<th scope="row">Alert tags</th>
+		<td>
+			<ul class="alert-tags-list">
+				
+			</ul>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Alert description</th>
+		<td> 
+<p>Se ha identificado que la respuesta dada contiene un token de gestión de sesión. El campo &#39;Other Info&#39; contiene un conjunto de tokens de cabecera que pueden utilizarse en el método Header Based Session Management (gestión de sesión basado en cabecera). Si la petición se encuentra en un contexto que tiene un método Session Management establecido en &quot;Auto-Detect&quot;, esta regla cambiará la gestión de sesión para utilizar los tokens identificados.</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Other info</th>
+		<td> 
+<p>json:token</p>
+ </td>
+	</tr>
+	<tr>
+		<th scope="row">Request</th>
+		<td><details open="open">
+				<summary>Request line and header section (257 bytes)</summary>
+				
+				<pre><code>POST http://localhost:3000/api/users/register HTTP/1.1
+Content-Type: application/json
+User-Agent: PostmanRuntime/7.51.0
+Accept: */*
+Postman-Token: 33a5cbc0-4e2a-47b2-a845-1d249e07e4c9
+host: localhost:3000
+Connection: keep-alive
+Content-Length: 99
+
+</code></pre>
+				
+				
+			</details> <details class="request-body" open="open">
+				<summary>Request body (99 bytes)</summary>
+				
+				<pre><code>{
+    &quot;name&quot;: &quot;zurupe&quot;,
+    &quot;email&quot;: &quot;pablozurita@example.com&quot;,
+    &quot;password&quot;: &quot;pablozurita&quot;
+}</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Response</th>
+		<td><details open="open">
+				<summary>Status line and header section (348 bytes)</summary>
+				
+				<pre><code>HTTP/1.1 201 Created
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:4200
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Content-Type: application/json; charset=utf-8
+Content-Length: 312
+ETag: W/&quot;138-1pJxRNNbxzDggAtBZQu5x6/tNRs&quot;
+Date: Mon, 22 Dec 2025 15:22:23 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+</code></pre>
+				
+				
+			</details> <details class="response-body" open="open">
+				<summary>Response body (312 bytes)</summary>
+				
+				<pre><code>{&quot;message&quot;:&quot;User created successfully&quot;,&quot;token&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NDk2MjJmOTFhZTE0MmM5Yzk1ODc0MiIsImlhdCI6MTc2NjQxNjk0MywiZXhwIjoxNzY2NTAzMzQzfQ.VuXQO65yhuv5FHvL2WZfw0LGSngHaqD4XAVSuNO9ZM0&quot;,&quot;user&quot;:{&quot;id&quot;:&quot;6949622f91ae142c9c958742&quot;,&quot;name&quot;:&quot;zurupe&quot;,&quot;email&quot;:&quot;pablozurita@example.com&quot;}}</code></pre>
+				
+				
+			</details></td>
+	</tr>
+	<tr>
+		<th scope="row">Parameter</th>
+		<td><pre><code>token</code></pre></td>
+	</tr>
+	
+	<tr>
+		<th scope="row">Evidence</th>
+		<td><pre><code>token</code></pre></td>
+	</tr>
+	<tr>
+		<th scope="row">Solution</th>
+		<td> 
+<p>Se trata de una alerta informativa y no de una vulnerabilidad, por lo que no hay nada que corregir.</p>
+ </td>
+	</tr>
+</table>
+
+											</details></li>
+									</ol>
+								</li>
+								
+							</ol>
+						</li>
+						
+					</ol>
+				</li>
+				
+				
+				  
+			</ol>
+		</section>
+
+		<section id="appendix" class="appendix">
+			<h2>Appendix</h2>
+
+			<section id="alert-types" class="alert-types">
+				<h3>Alert Types</h3>
+				<p class="alert-types-intro">This section contains additional information on the types of alerts in the report.</p>
+				<ol>
+					<li
+						id="alert-type-0">
+						<h4>El servidor divulga información mediante un campo(s) de encabezado de respuesta HTTP &#39;&#39;&#39;&#39;X-Powered-By&#39;&#39;&#39;&#39;</h4>
+						<table class="alert-types-table">
+							<tr>
+								<th scope="row">Source</th>
+								<td>
+									
+									   <span>raised by a passive scanner</span> <span>(<a
+										href="https://www.zaproxy.org/docs/alerts/10037/">El servidor divulga información mediante un campo(s) de encabezado de respuesta HTTP &#39;&#39;&#39;&#39;X-Powered-By&#39;&#39;&#39;&#39;</a>)
+									</span>   
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">CWE ID</th>
+								<td><a
+									href="https://cwe.mitre.org/data/definitions/497.html">497</a></td>
+							</tr>
+							<tr>
+								<th scope="row">WASC ID</th>
+								<td>13</td>
+							</tr>
+							<tr>
+								<th scope="row">Reference</th>
+								<td>
+									<ol>
+										<li><a
+											href="https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework">https://owasp.org/www-project-web-security-testing-guide/v42/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework</a></li>
+										<li><a
+											href="https://www.troyhunt.com/shhh-dont-let-your-response-headers/">https://www.troyhunt.com/shhh-dont-let-your-response-headers/</a></li>
+									</ol>
+								</td>
+							</tr>
+						</table>
+					</li>
+					<li
+						id="alert-type-1">
+						<h4>Falta encabezado X-Content-Type-Options</h4>
+						<table class="alert-types-table">
+							<tr>
+								<th scope="row">Source</th>
+								<td>
+									
+									   <span>raised by a passive scanner</span> <span>(<a
+										href="https://www.zaproxy.org/docs/alerts/10021/">Falta encabezado X-Content-Type-Options</a>)
+									</span>   
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">CWE ID</th>
+								<td><a
+									href="https://cwe.mitre.org/data/definitions/693.html">693</a></td>
+							</tr>
+							<tr>
+								<th scope="row">WASC ID</th>
+								<td>15</td>
+							</tr>
+							<tr>
+								<th scope="row">Reference</th>
+								<td>
+									<ol>
+										<li><a
+											href="https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85)">https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85)</a></li>
+										<li><a
+											href="https://owasp.org/www-community/Security_Headers">https://owasp.org/www-community/Security_Headers</a></li>
+									</ol>
+								</td>
+							</tr>
+						</table>
+					</li>
+					<li
+						id="alert-type-2">
+						<h4>Petición de Autenticación Identificada</h4>
+						<table class="alert-types-table">
+							<tr>
+								<th scope="row">Source</th>
+								<td>
+									
+									   <span>raised by a passive scanner</span> <span>(<a
+										href="https://www.zaproxy.org/docs/alerts/10111/">Petición de Autenticación Identificada</a>)
+									</span>   
+								</td>
+							</tr>
+							
+							
+							<tr>
+								<th scope="row">Reference</th>
+								<td>
+									<ol>
+										<li><a
+											href="https://www.zaproxy.org/docs/desktop/addons/authentication-helper/auth-req-id/">https://www.zaproxy.org/docs/desktop/addons/authentication-helper/auth-req-id/</a></li>
+									</ol>
+								</td>
+							</tr>
+						</table>
+					</li>
+					<li
+						id="alert-type-3">
+						<h4>Respuesta de Gestión de Sesión Identificada</h4>
+						<table class="alert-types-table">
+							<tr>
+								<th scope="row">Source</th>
+								<td>
+									
+									   <span>raised by a passive scanner</span> <span>(<a
+										href="https://www.zaproxy.org/docs/alerts/10112/">Respuesta de Gestión de Sesión Identificada</a>)
+									</span>   
+								</td>
+							</tr>
+							
+							
+							<tr>
+								<th scope="row">Reference</th>
+								<td>
+									<ol>
+										<li><a
+											href="https://www.zaproxy.org/docs/desktop/addons/authentication-helper/session-mgmt-id/">https://www.zaproxy.org/docs/desktop/addons/authentication-helper/session-mgmt-id/</a></li>
+									</ol>
+								</td>
+							</tr>
+						</table>
+					</li>
+				</ol>
+			</section>
+		</section>
+		 
+	</main>
+</body>
+</html>
+
+
+
