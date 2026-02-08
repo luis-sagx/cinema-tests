@@ -4,7 +4,7 @@ function getWorkerUriOptions() {
   const uri = process.env.MONGODB_URI;
   const workerId = process.env.JEST_WORKER_ID;
   if (workerId) {
-    const match = String(uri).match(/\/([^\/?]+)(\?|$)/);
+    const match = String(uri).match(/\/([^/?]+)(\?|$)/);
     const baseDb = match ? match[1] : null;
     if (baseDb) {
       const dbName = `${baseDb}-worker-${workerId}`;
