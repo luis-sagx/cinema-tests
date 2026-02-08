@@ -9,8 +9,30 @@ const showtimeRoutes = require('./routes/showtime.routes');
 const app = express(); // Crea una instancia de la aplicación Express
 
 // Configurar CORS para permitir peticiones desde el frontend Angular
+const allowedOrigins = [
+  'http://localhost:4200', // Desarrollo local
+  'https://cinema-tests.vercel.app', // Producción Vercel (ajusta al tuyo)
+];
+
 app.use(cors({
-  origin: 'http://localhost:4200',
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como mobile apps o curl)
+    if (!origin) return callback(null, true);
+
+    // Verificar si el origin está permitido
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return allowed === origin;
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
