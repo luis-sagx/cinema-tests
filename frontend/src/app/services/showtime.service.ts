@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Showtime } from '../models/showtime.model';
+import { environment } from '../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ShowtimeService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/api/showtimes';
+  private apiUrl = `${environment.apiUrl}/showtimes`;
 
   getAll(): Observable<Showtime[]> {
     return this.http.get<Showtime[]>(this.apiUrl);
