@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ShowtimeList } from './showtime-list';
 import { ShowtimeService } from '../../../services/showtime.service';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import Swal from 'sweetalert2';
 
 describe('ShowtimeList', () => {
   let component: ShowtimeList;
@@ -79,8 +80,11 @@ describe('ShowtimeList', () => {
     expect(title).toBe('Inception');
   });
 
-  it('should delete showtime and reload list on successful deletion', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
+  it('should delete showtime and reload list on successful deletion', fakeAsync(() => {
+    spyOn(Swal, 'fire').and.returnValue(
+      Promise.resolve({ isConfirmed: true } as any)
+    );
+
     const mockShowtimes = [
       { 
         _id: '1', 
@@ -90,13 +94,15 @@ describe('ShowtimeList', () => {
         end_time: new Date('2024-12-24T16:00')
       }
     ];
-    
+
     showtimeService.delete.and.returnValue(of(undefined));
     showtimeService.getAll.and.returnValue(of(mockShowtimes));
-    
+
     component.deleteShowtime('1');
-    
+
+    tick(); 
+
     expect(showtimeService.delete).toHaveBeenCalledWith('1');
     expect(showtimeService.getAll).toHaveBeenCalled();
-  });
+  }));
 });

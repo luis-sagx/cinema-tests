@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { RoomService } from '../../../services/room.service';
 import { Room } from '../../../models/room.model';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-room-list',
@@ -37,18 +38,52 @@ export class RoomList {
   }
 
   deleteRoom(id: string): void {
-    if (confirm('Are you sure you want to delete this room?')) {
+    Swal.fire({
+      title: '¿Eliminar sala?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      Swal.fire({
+        title: 'Eliminando sala...',
+        text: 'Por favor espera',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       this.roomService.delete(id).subscribe({
         next: () => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Sala eliminada',
+            text: 'La sala fue eliminada correctamente',
+            timer: 1500,
+            showConfirmButton: false,
+          });
           this.loadRooms();
         },
         error: (error) => {
-          this.errorMessage =
-            'The room cannot be deleted because it is being used in one or more showtimes';
           console.error(error);
+
+          Swal.fire({
+            icon: 'error',
+            title: 'No se puede eliminar',
+            text:
+              error?.error?.message ||
+              'La sala no puede eliminarse porque está siendo utilizada en uno o más showtimes',
+          });
         },
       });
-    }
+    });
   }
 
   getTypeClass(type: string): string {

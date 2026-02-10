@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RoomList } from './room-list';
 import { RoomService } from '../../../services/room.service';
 import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import Swal from 'sweetalert2';
 
 describe('RoomList', () => {
   let component: RoomList;
@@ -59,20 +60,25 @@ describe('RoomList', () => {
     expect(component.getTypeClass('VIP')).toContain('bg-gold');
   });
 
-  it('should delete room and reload list on successful deletion', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
+  it('should delete room and reload list on successful deletion', fakeAsync(() => {
+    spyOn(Swal, 'fire').and.returnValue(
+      Promise.resolve({ isConfirmed: true } as any)
+    );
+
     const mockRooms = [
       { _id: '1', name: 'Room 1', capacity: 100, type: '2D' as const }
     ];
-    
+
     roomService.delete.and.returnValue(of(undefined));
     roomService.getAll.and.returnValue(of(mockRooms));
-    
+
     component.deleteRoom('1');
-    
+
+    tick(); 
+
     expect(roomService.delete).toHaveBeenCalledWith('1');
     expect(roomService.getAll).toHaveBeenCalled();
-  });
+  }));
 
   it('should set errorMessage when loading rooms fails', () => {
     roomService.getAll.and.returnValue(throwError(() => new Error('Network error')));

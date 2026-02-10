@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MovieService } from '../../../services/movie.service';
 import { Movie } from '../../../models/movie.model';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-movie-list',
@@ -37,17 +38,53 @@ export class MovieList {
   }
 
   deleteMovie(id: string): void {
-    if (confirm('Are you sure you want to delete this movie?')) {
+    Swal.fire({
+      title: '¿Eliminar película?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      // 🔄 Loading
+      Swal.fire({
+        title: 'Eliminando película...',
+        text: 'Por favor espera',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       this.movieService.delete(id).subscribe({
         next: () => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Película eliminada',
+            text: 'La película fue eliminada correctamente',
+            timer: 1500,
+            showConfirmButton: false,
+          });
           this.loadMovies();
         },
         error: (error) => {
-          this.errorMessage =
-            'The movie cannot be deleted because it is being used in one or more showtimes';
           console.error(error);
+
+          // ❌ Excepción controlada (película en uso)
+          Swal.fire({
+            icon: 'error',
+            title: 'No se puede eliminar',
+            text:
+              error?.error?.message ||
+              'La película no puede eliminarse porque está siendo utilizada en uno o más showtimes',
+          });
         },
       });
-    }
+    });
   }
 }

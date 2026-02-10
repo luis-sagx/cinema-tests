@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MovieList } from './movie-list';
 import { MovieService } from '../../../services/movie.service';
 import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import Swal from 'sweetalert2';
 
 describe('MovieList', () => {
   let component: MovieList;
@@ -62,26 +63,35 @@ describe('MovieList', () => {
     expect(component.isLoading).toBeFalse();
   });
 
-  it('should delete movie and reload list on successful deletion', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
+  it('should delete movie and reload list on successful deletion', fakeAsync(() => {
+    spyOn(Swal, 'fire').and.returnValue(
+      Promise.resolve({ isConfirmed: true } as any)
+    );
+
     const mockMovies = [
       { _id: '1', title: 'Movie 1', director: 'Director 1', genre: 'Action', duration: 120, release_year: 2023 }
     ];
-    
+
     movieService.delete.and.returnValue(of(undefined));
     movieService.getAll.and.returnValue(of(mockMovies));
-    
+
     component.deleteMovie('1');
-    
+
+    tick(); 
+
     expect(movieService.delete).toHaveBeenCalledWith('1');
     expect(movieService.getAll).toHaveBeenCalled();
-  });
+  }));
 
-  it('should not delete movie if user cancels confirmation', () => {
-    spyOn(window, 'confirm').and.returnValue(false);
-    
+  it('should not delete movie if user cancels confirmation', fakeAsync(() => {
+    spyOn(Swal, 'fire').and.returnValue(
+      Promise.resolve({ isConfirmed: false } as any)
+    );
+
     component.deleteMovie('1');
-    
+
+    tick(); 
+
     expect(movieService.delete).not.toHaveBeenCalled();
-  });
+  }));
 });
