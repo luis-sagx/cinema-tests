@@ -7,9 +7,11 @@ const Showtime = require('../src/models/showtime.model');
 const movieController = require('../src/controllers/movie.controller');
 const jwt = require('jsonwebtoken');
 const { connectTestDB } = require('../src/config/setupDB');
+const { updateMovie } = require('../src/controllers/movie.controller');
 
 let token;
 let user;
+let originalFindOne;
 
 // Antes de todos los tests
 beforeAll(async () => {
@@ -26,6 +28,8 @@ beforeAll(async () => {
   token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'testsecret', {
     expiresIn: '24h',
   });
+
+  originalFindOne = Movie.findOne;
 });
 
 beforeEach(async () => {
@@ -40,6 +44,7 @@ afterEach(() => {
 afterAll(async () => {
   await Movie.deleteMany({});
   await mongoose.connection.close();
+  Movie.findOne = originalFindOne;
 });
 
 describe('Movie API – full test coverage', () => {
@@ -429,6 +434,28 @@ describe('Movie API – full test coverage', () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Cannot delete movie because it is being used in one or more showtimes' }));
+    });
+
+    test('maneja error genérico y retorna 500', async () => {
+      const req = {
+        params: { id: '123' },
+        body: { title: 'Test', duration: 120, release_year: 2023 },
+        userId: 'user123'
+      };
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn()
+      };
+
+      // Reemplazamos solo para este test
+      Movie.findOne = jest.fn().mockRejectedValue(new Error('DB error'));
+
+      await updateMovie(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Error updating movie', error: 'DB error' })
+      );
     });
   });
 });

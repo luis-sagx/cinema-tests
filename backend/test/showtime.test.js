@@ -715,4 +715,126 @@ describe('Showtime API (JWT protected)', () => {
     expect(res.body.room_id).toBe(room2._id.toString());
   });
 
+  test('PUT updates only start_time and end_time', async () => {
+    const movie = await Movie.create({
+      title: 'Movie',
+      duration: 120,
+      release_year: 2024,
+      user_id: user._id,
+    });
+
+    const room = await Room.create({
+      name: 'Room',
+      capacity: 50,
+      type: '2D',
+      user_id: user._id,
+    });
+
+    // Crear el showtime original
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000), // +1 día
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),   // +2 días
+      });
+
+    // Nueva fecha para actualizar
+    const newStart = new Date(Date.now() + 72 * 60 * 60 * 1000); // +3 días
+    const newEnd = new Date(Date.now() + 96 * 60 * 60 * 1000);   // +4 días
+
+    const res = await request(app)
+      .put(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        start_time: newStart,
+        end_time: newEnd,
+      });
+
+    expect(res.statusCode).toBe(200);
+
+    // Comparar solo la fecha (ignorando horas y minutos)
+    const receivedStart = new Date(res.body.start_time).toISOString().split('T')[0];
+    const expectedStart = newStart.toISOString().split('T')[0];
+    expect(receivedStart).toBe(expectedStart);
+
+    const receivedEnd = new Date(res.body.end_time).toISOString().split('T')[0];
+    const expectedEnd = newEnd.toISOString().split('T')[0];
+    expect(receivedEnd).toBe(expectedEnd);
+
+    // Verificar que movie_id y room_id no cambiaron
+    expect(res.body.movie_id).toBe(movie._id.toString());
+    expect(res.body.room_id).toBe(room._id.toString());
+  });
+
+  test('PUT fails if new showtime overlaps another', async () => {
+    const movie = await Movie.create({ title: 'Movie', duration: 120, release_year: 2024, user_id: user._id });
+    const room = await Room.create({ name: 'Room', capacity: 50, type: '2D', user_id: user._id });
+
+    // Primer showtime
+    const show1 = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    // Segundo showtime
+    const show2 = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie._id,
+        room_id: room._id,
+        start_time: new Date(Date.now() + 96 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 120 * 60 * 60 * 1000),
+      });
+
+    // Intentar actualizar segundo showtime para que solape el primero
+    const res = await request(app)
+      .put(`/api/showtimes/${show2.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        start_time: new Date(Date.now() + 36 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 60 * 60 * 60 * 1000),
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe('There is an overlapping showtime in this room for these dates');
+  });
+
+  test('PUT updates movie_id and room_id without changing times', async () => {
+    const movie1 = await Movie.create({ title: 'Movie1', duration: 100, release_year: 2024, user_id: user._id });
+    const movie2 = await Movie.create({ title: 'Movie2', duration: 90, release_year: 2024, user_id: user._id });
+    const room1 = await Room.create({ name: 'Room1', capacity: 50, type: '2D', user_id: user._id });
+    const room2 = await Room.create({ name: 'Room2', capacity: 60, type: '3D', user_id: user._id });
+
+    const createRes = await request(app)
+      .post('/api/showtimes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie1._id,
+        room_id: room1._id,
+        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+
+    const res = await request(app)
+      .put(`/api/showtimes/${createRes.body._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        movie_id: movie2._id,
+        room_id: room2._id,
+      });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.movie_id).toBe(movie2._id.toString());
+    expect(res.body.room_id).toBe(room2._id.toString());
+  });
+
 });

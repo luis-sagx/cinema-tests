@@ -20,4 +20,4 @@ async function connectTestDB() {
   return mongoose.connect(uri, options);
 }
 
-module.exports = { connectTestDB };
+module.exports = { connectTestDB, getWorkerUriOptions };
