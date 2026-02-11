@@ -209,4 +209,13 @@ describe('ShowtimeList', () => {
     // Assert: Verify it returns fallback message
     expect(roomName).toBe('Room not available');
   });
+
+  it('should set errorMessage when loading showtimes fails', () => {
+    showtimeService.getAll.and.returnValue(throwError(() => new Error('Network error')));
+
+    component.loadShowtimes();
+
+    expect(component.errorMessage).toBe('Error loading showtimes');
+    expect(component.isLoading).toBeFalse();
+  });
 });
