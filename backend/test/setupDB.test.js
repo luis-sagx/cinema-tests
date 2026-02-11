@@ -1,44 +1,81 @@
 const mongoose = require('mongoose');
-const { getWorkerUriOptions, connectTestDB } = require('../src/config/setupDB');
+const { connectTestDB, closeTestDB } = require('../src/config/setupDB');
 
-jest.mock('mongoose', () => ({
-  connect: jest.fn().mockResolvedValue(true)
-}));
-
-describe('getWorkerUriOptions', () => {
-
-  test('dbName específico si hay workerId y baseDb', () => {
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/testdb';
-    process.env.JEST_WORKER_ID = '1';
-
-    const { options } = getWorkerUriOptions();
-    expect(options.dbName).toBe('testdb-worker-1');
-  });
-
-  test('retorna vacío si no hay workerId', () => {
-    delete process.env.JEST_WORKER_ID;
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/testdb';
-
-    const { options } = getWorkerUriOptions();
-    expect(options).toEqual({});
-  });
-
-  test('retorna vacío si URI no tiene dbName', () => {
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/';
-    process.env.JEST_WORKER_ID = '1';
-
-    const { options } = getWorkerUriOptions();
-    expect(options).toEqual({});
-  });
-
+// Mock mongoose
+jest.mock('mongoose', () => {
+  const mockConnect = jest.fn().mockResolvedValue({});
+  const mockClose = jest.fn().mockResolvedValue({});
+  return {
+    connect: mockConnect,
+    connection: {
+      readyState: 0,
+      close: mockClose
+    }
+  };
 });
 
-describe('connectTestDB', () => {
+// Mock mongodb-memory-server
+jest.mock('mongodb-memory-server', () => ({
+  MongoMemoryServer: {
+    create: jest.fn().mockResolvedValue({
+      getUri: jest.fn().mockReturnValue('mongodb://mem-server/test'),
+      stop: jest.fn().mockResolvedValue({})
+    })
+  }
+}));
 
-  test('llama a mongoose.connect', async () => {
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/testdb';
-    await expect(connectTestDB()).resolves.not.toThrow();
-    expect(mongoose.connect).toHaveBeenCalled();
+describe('connectTestDB and closeTestDB', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    delete process.env.MONGODB_URI;
+    delete process.env.JEST_WORKER_ID;
   });
 
+  test('conecta usando MongoMemoryServer si no hay MONGODB_URI', async () => {
+    // Act
+    await connectTestDB();
+
+    // Assert
+    expect(mongoose.connect).toHaveBeenCalledWith(
+      expect.stringContaining('mongodb://'),
+      {}
+    );
+  });
+
+  test('conecta usando MONGODB_URI si está presente', async () => {
+    // Arrange
+    process.env.MONGODB_URI = 'mongodb://localhost:27017/testdb';
+
+    // Act
+    await connectTestDB();
+
+    // Assert
+    expect(mongoose.connect).toHaveBeenCalledWith(
+      'mongodb://localhost:27017/testdb',
+      {}
+    );
+  });
+
+  test('usa dbName específico si hay JEST_WORKER_ID', async () => {
+    // Arrange
+    process.env.MONGODB_URI = 'mongodb://localhost:27017/testdb';
+    process.env.JEST_WORKER_ID = '2';
+
+    // Act
+    await connectTestDB();
+
+    // Assert
+    expect(mongoose.connect).toHaveBeenCalledWith(
+      'mongodb://localhost:27017/testdb',
+      { dbName: 'testdb-worker-2' }
+    );
+  });
+
+  test('closeTestDB cierra la conexión', async () => {
+    // Act
+    await closeTestDB();
+
+    // Assert
+    expect(mongoose.connection.close).toHaveBeenCalled();
+  });
 });

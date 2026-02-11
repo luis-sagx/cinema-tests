@@ -6,30 +6,26 @@ const User = require('../src/models/user.model');
 const Showtime = require('../src/models/showtime.model');
 const movieController = require('../src/controllers/movie.controller');
 const jwt = require('jsonwebtoken');
-const { connectTestDB } = require('../src/config/setupDB');
+const { connectTestDB, closeTestDB } = require('../src/config/setupDB');
 const { updateMovie } = require('../src/controllers/movie.controller');
 
 let token;
 let user;
-let originalFindOne;
 
-// Antes de todos los tests
+// Aumentar timeout por si la conexión a la DB es lenta (necesario para MongoMemoryServer)
+jest.setTimeout(60000);
+
 beforeAll(async () => {
   await connectTestDB();
-  await User.deleteMany({});
   await Movie.deleteMany({});
-
   user = await User.create({
     name: 'Test User',
     email: 'testuser2@example.com',
     password: 'password123',
   });
-
   token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'testsecret', {
     expiresIn: '24h',
   });
-
-  originalFindOne = Movie.findOne;
 });
 
 beforeEach(async () => {
@@ -51,9 +47,12 @@ describe('Movie API – full test coverage', () => {
 
   describe('GET /api/movies', () => {
     test('returns an empty list initially', async () => {
+      // Arrange & Act
       const res = await request(app)
         .get('/api/movies')
         .set('Authorization', `Bearer ${token}`);
+
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual([]);
     });
@@ -61,16 +60,21 @@ describe('Movie API – full test coverage', () => {
 
   describe('POST /api/movies', () => {
     test('creates a movie successfully', async () => {
+      // Arrange
+      const movieData = {
+        title: 'Interstellar',
+        duration: 169,
+        release_year: 2014,
+        user_id: user._id
+      };
+
+      // Act
       const res = await request(app)
         .post('/api/movies')
         .set('Authorization', `Bearer ${token}`)
-        .send({
-          title: 'Interstellar',
-          duration: 169,
-          release_year: 2014,
-          user_id: user._id
-        });
+        .send(movieData);
 
+      // Assert
       expect(res.statusCode).toBe(201);
       expect(res.body).toHaveProperty('_id');
       expect(res.body.title).toBe('Interstellar');
@@ -80,10 +84,13 @@ describe('Movie API – full test coverage', () => {
     });
 
     test('fails if title is missing', async () => {
+      // Act
       const res = await request(app)
         .post('/api/movies')
         .set('Authorization', `Bearer ${token}`)
         .send({ duration: 100, user_id: user._id });
+
+      // Assert
       expect(res.statusCode).toBe(400);
     });
 
@@ -119,14 +126,19 @@ describe('Movie API – full test coverage', () => {
 
   describe('GET /api/movies/:id', () => {
     test('returns a movie by ID', async () => {
+      // Arrange
       const movie = await Movie.create({
         title: 'Interstellar',
         duration: 169,
         user_id: user._id,
       });
+
+      // Act
       const res = await request(app)
         .get(`/api/movies/${movie._id}`)
         .set('Authorization', `Bearer ${token}`);
+
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body.title).toBe(movie.title);
     });
@@ -149,16 +161,21 @@ describe('Movie API – full test coverage', () => {
 
   describe('PUT /api/movies/:id', () => {
     test('updates a movie successfully', async () => {
+      // Arrange
       const movie = await Movie.create({
         title: 'Interstellar',
         duration: 169,
         user_id: user._id,
       });
+      const updateData = { title: 'New Title', duration: 120, user_id: user._id };
+
+      // Act
       const res = await request(app)
         .put(`/api/movies/${movie._id}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ title: 'New Title', duration: 120, user_id: user._id });
+        .send(updateData);
 
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body.title).toBe('New Title');
       expect(res.body.duration).toBe(120);
@@ -259,7 +276,7 @@ describe('Movie API – full test coverage', () => {
         .delete(`/api/movies/${movie._id}`)
         .set('Authorization', `Bearer ${secondUserToken}`);
 
-      expect(res.statusCode).toBe(404); 
+      expect(res.statusCode).toBe(404);
       expect(res.body.message).toBe('Movie not found or unauthorized');
     });
   });

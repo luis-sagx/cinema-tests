@@ -19,7 +19,7 @@ describe('Register', () => {
         { provide: AuthService, useValue: authServiceSpy }
       ]
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(Register);
     component = fixture.componentInstance;
@@ -31,6 +31,7 @@ describe('Register', () => {
   });
 
   it('should initialize registerForm with empty values', () => {
+    // Assert
     expect(component.registerForm).toBeDefined();
     expect(component.registerForm.get('name')?.value).toBe('');
     expect(component.registerForm.get('email')?.value).toBe('');
@@ -38,14 +39,24 @@ describe('Register', () => {
   });
 
   it('should validate name as required', () => {
+    // Arrange
     const nameControl = component.registerForm.get('name');
+
+    // Act
     nameControl?.setValue('');
+
+    // Assert
     expect(nameControl?.hasError('required')).toBeTrue();
   });
 
   it('should validate email as required', () => {
+    // Arrange
     const emailControl = component.registerForm.get('email');
+
+    // Act
     emailControl?.setValue('');
+
+    // Assert
     expect(emailControl?.hasError('required')).toBeTrue();
   });
 });
