@@ -38,53 +38,46 @@ export class MovieList {
   }
 
   deleteMovie(id: string): void {
+    if (!window.confirm('¿Eliminar película? Esta acción no se puede deshacer')) {
+      return;
+    }
+
+    // 🔄 Loading
     Swal.fire({
-      title: '¿Eliminar película?',
-      text: 'Esta acción no se puede deshacer',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-    }).then((result) => {
-      if (!result.isConfirmed) return;
+      title: 'Eliminando película...',
+      text: 'Por favor espera',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
 
-      // 🔄 Loading
-      Swal.fire({
-        title: 'Eliminando película...',
-        text: 'Por favor espera',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
-      });
+    this.movieService.delete(id).subscribe({
+      next: () => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Película eliminada',
+          text: 'La película fue eliminada correctamente',
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        this.loadMovies();
+      },
+      error: (error) => {
+        console.error(error);
+        this.errorMessage =
+          'The movie cannot be deleted because it is being used in one or more showtimes';
 
-      this.movieService.delete(id).subscribe({
-        next: () => {
-          Swal.fire({
-            icon: 'success',
-            title: 'Película eliminada',
-            text: 'La película fue eliminada correctamente',
-            timer: 1500,
-            showConfirmButton: false,
-          });
-          this.loadMovies();
-        },
-        error: (error) => {
-          console.error(error);
-
-          // ❌ Excepción controlada (película en uso)
-          Swal.fire({
-            icon: 'error',
-            title: 'No se puede eliminar',
-            text:
-              error?.error?.message ||
-              'La película no puede eliminarse porque está siendo utilizada en uno o más showtimes',
-          });
-        },
-      });
+        // ❌ Excepción controlada (película en uso)
+        Swal.fire({
+          icon: 'error',
+          title: 'No se puede eliminar',
+          text:
+            error?.error?.message ||
+            'La película no puede eliminarse porque está siendo utilizada en uno o más showtimes',
+        });
+      },
     });
   }
 }

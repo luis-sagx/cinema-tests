@@ -1,10 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ShowtimeList } from './showtime-list';
 import { ShowtimeService } from '../../../services/showtime.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import Swal from 'sweetalert2';
 
 describe('ShowtimeList', () => {
   let component: ShowtimeList;
@@ -19,10 +18,9 @@ describe('ShowtimeList', () => {
       providers: [
         provideHttpClient(),
         provideRouter([]),
-        { provide: ShowtimeService, useValue: showtimeServiceSpy }
-      ]
-    })
-      .compileComponents();
+        { provide: ShowtimeService, useValue: showtimeServiceSpy },
+      ],
+    }).compileComponents();
 
     showtimeService = TestBed.inject(ShowtimeService) as jasmine.SpyObj<ShowtimeService>;
 
@@ -45,18 +43,24 @@ describe('ShowtimeList', () => {
     const mockShowtimes = [
       {
         _id: '1',
-        movie_id: { _id: 'm1', title: 'Movie 1', director: 'Director', genre: 'Action', duration: 120, release_year: 2023 },
+        movie_id: {
+          _id: 'm1',
+          title: 'Movie 1',
+          director: 'Director',
+          genre: 'Action',
+          duration: 120,
+          release_year: 2023,
+        },
         room_id: { _id: 'r1', name: 'Room 1', capacity: 100, type: '2D' as const },
         start_time: new Date('2024-12-24T14:00'),
-        end_time: new Date('2024-12-24T16:00')
-      }
+        end_time: new Date('2024-12-24T16:00'),
+      },
     ];
+
     showtimeService.getAll.and.returnValue(of(mockShowtimes));
 
-    // Act
     component.ngOnInit();
 
-    // Assert
     expect(showtimeService.getAll).toHaveBeenCalled();
     expect(component.showtimes).toEqual(mockShowtimes);
     expect(component.isLoading).toBeFalse();
@@ -69,7 +73,6 @@ describe('ShowtimeList', () => {
     // Act
     const formatted = component.formatDate(testDate);
 
-    // Assert
     expect(formatted).toBeDefined();
     expect(typeof formatted).toBe('string');
   });
@@ -78,32 +81,42 @@ describe('ShowtimeList', () => {
     // Arrange
     const mockShowtime = {
       _id: '1',
-      movie_id: { _id: 'm1', title: 'Inception', director: 'Nolan', genre: 'Sci-Fi', duration: 148, release_year: 2010 },
+      movie_id: {
+        _id: 'm1',
+        title: 'Inception',
+        director: 'Nolan',
+        genre: 'Sci-Fi',
+        duration: 148,
+        release_year: 2010,
+      },
       room_id: { _id: 'r1', name: 'Room 1', capacity: 100, type: '2D' as const },
       start_time: new Date('2024-12-24T14:00'),
-      end_time: new Date('2024-12-24T16:00')
+      end_time: new Date('2024-12-24T16:00'),
     };
 
-    // Act
     const title = component.getMovieTitle(mockShowtime);
 
     // Assert
     expect(title).toBe('Inception');
   });
 
-  it('should delete showtime and reload list on successful deletion', fakeAsync(() => {
-    // Arrange
-    spyOn(Swal, 'fire').and.returnValue(
-      Promise.resolve({ isConfirmed: true } as any)
-    );
+  it('should delete showtime and reload list on successful deletion', () => {
+    spyOn(window, 'confirm').and.returnValue(true);
     const mockShowtimes = [
       {
         _id: '1',
-        movie_id: { _id: 'm1', title: 'Movie 1', director: 'Director', genre: 'Action', duration: 120, release_year: 2023 },
+        movie_id: {
+          _id: 'm1',
+          title: 'Movie 1',
+          director: 'Director',
+          genre: 'Action',
+          duration: 120,
+          release_year: 2023,
+        },
         room_id: { _id: 'r1', name: 'Room 1', capacity: 100, type: '2D' as const },
         start_time: new Date('2024-12-24T14:00'),
-        end_time: new Date('2024-12-24T16:00')
-      }
+        end_time: new Date('2024-12-24T16:00'),
+      },
     ];
     showtimeService.delete.and.returnValue(of(undefined));
     showtimeService.getAll.and.returnValue(of(mockShowtimes));
@@ -112,8 +125,106 @@ describe('ShowtimeList', () => {
     component.deleteShowtime('1');
     tick();
 
-    // Assert
     expect(showtimeService.delete).toHaveBeenCalledWith('1');
     expect(showtimeService.getAll).toHaveBeenCalled();
-  }));
+  });
+
+  // AAA: Additional deleteShowtime tests
+  it('should not delete showtime if user cancels confirmation', () => {
+    // Arrange: Setup confirmation to return false
+    spyOn(window, 'confirm').and.returnValue(false);
+
+    // Act: Attempt to delete
+    component.deleteShowtime('1');
+
+    // Assert: Verify no delete was called
+    expect(showtimeService.delete).not.toHaveBeenCalled();
+  });
+
+  it('should handle error when delete fails', () => {
+    // Arrange: Setup delete to fail
+    spyOn(window, 'confirm').and.returnValue(true);
+    const errorResponse = { error: { message: 'Showtime is in use' } };
+    showtimeService.delete.and.returnValue(throwError(() => errorResponse));
+
+    // Act: Delete showtime
+    component.deleteShowtime('1');
+
+    // Assert: Verify error message is set
+    expect(component.errorMessage).toBe('Error deleting showtime');
+  });
+
+  it('should get room name from showtime object', () => {
+    // Arrange: Create mock showtime
+    const mockShowtime = {
+      _id: '1',
+      movie_id: {
+        _id: 'm1',
+        title: 'Movie 1',
+        director: 'Director',
+        genre: 'Action',
+        duration: 120,
+        release_year: 2023,
+      },
+      room_id: { _id: 'r1', name: 'VIP Room', capacity: 50, type: 'VIP' as const },
+      start_time: new Date('2024-12-24T14:00'),
+      end_time: new Date('2024-12-24T16:00'),
+    };
+
+    // Act: Get room name
+    const roomName = component.getRoomName(mockShowtime);
+
+    // Assert: Verify room name is returned
+    expect(roomName).toBe('VIP Room');
+  });
+
+  it('should handle showtime with string movie_id', () => {
+    // Arrange: Create showtime with string movie_id (not populated)
+    const mockShowtime = {
+      _id: '1',
+      movie_id: 'movie123' as unknown as string,
+      room_id: { _id: 'r1', name: 'Room 1', capacity: 100, type: '2D' as const },
+      start_time: new Date('2024-12-24T14:00'),
+      end_time: new Date('2024-12-24T16:00'),
+    };
+
+    // Act: Get movie title
+    const title = component.getMovieTitle(mockShowtime);
+
+    // Assert: Verify it returns fallback message
+    expect(title).toBe('Movie not available');
+  });
+
+  it('should handle showtime with string room_id', () => {
+    // Arrange: Create showtime with string room_id (not populated)
+    const mockShowtime = {
+      _id: '1',
+      movie_id: {
+        _id: 'm1',
+        title: 'Movie 1',
+        director: 'Director',
+        genre: 'Action',
+        duration: 120,
+        release_year: 2023,
+      },
+      room_id: 'room456' as unknown as string,
+      start_time: new Date('2024-12-24T14:00'),
+      end_time: new Date('2024-12-24T16:00'),
+    };
+
+    // Act: Get room name
+    const roomName = component.getRoomName(mockShowtime);
+
+    // Assert: Verify it returns fallback message
+    expect(roomName).toBe('Room not available');
+  });
+
+  it('should set errorMessage when loading showtimes fails', () => {
+    showtimeService.getAll.and.returnValue(throwError(() => new Error('Network error')));
+
+    component.loadShowtimes();
+
+    expect(component.errorMessage).toBe('Error loading showtimes');
+    expect(component.isLoading).toBeFalse();
+  });
 });

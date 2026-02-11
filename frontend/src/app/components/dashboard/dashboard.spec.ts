@@ -12,7 +12,7 @@ describe('Dashboard', () => {
 
   beforeEach(async () => {
     const authServiceSpy = jasmine.createSpyObj('AuthService', ['logout'], {
-      currentUser$: of({ _id: '1', email: 'test@test.com', name: 'Test User' })
+      currentUser$: of({ _id: '1', email: 'test@test.com', name: 'Test User' }),
     });
 
     await TestBed.configureTestingModule({
@@ -20,10 +20,9 @@ describe('Dashboard', () => {
       providers: [
         provideHttpClient(),
         provideRouter([]),
-        { provide: AuthService, useValue: authServiceSpy }
-      ]
-    })
-    .compileComponents();
+        { provide: AuthService, useValue: authServiceSpy },
+      ],
+    }).compileComponents();
 
     authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
 
@@ -43,7 +42,7 @@ describe('Dashboard', () => {
 
   it('should have currentUser$ observable from authService', () => {
     expect(component.currentUser$).toBeDefined();
-    component.currentUser$.subscribe(user => {
+    component.currentUser$.subscribe((user) => {
       expect(user).toEqual({ _id: '1', email: 'test@test.com', name: 'Test User' });
     });
   });
@@ -56,7 +55,7 @@ describe('Dashboard', () => {
   it('should call logout method only once per invocation', () => {
     component.logout();
     expect(authService.logout).toHaveBeenCalledTimes(1);
-    
+
     component.logout();
     expect(authService.logout).toHaveBeenCalledTimes(2);
   });
