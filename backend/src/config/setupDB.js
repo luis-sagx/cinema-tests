@@ -5,7 +5,9 @@ let mongoServer;
 
 async function connectTestDB() {
   // Si ya estamos conectados (por ejemplo, en watch mode), no hacemos nada
-  if (mongoose.connection.readyState === 1) return mongoose.connection;
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
 
   let uri = process.env.MONGODB_URI;
   const options = {};
