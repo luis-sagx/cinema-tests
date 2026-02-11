@@ -38,20 +38,14 @@ describe('Login', () => {
   });
 
   it('should initialize loginForm with empty values', () => {
-    // Assert
     expect(component.loginForm).toBeDefined();
     expect(component.loginForm.get('email')?.value).toBe('');
     expect(component.loginForm.get('password')?.value).toBe('');
   });
 
   it('should validate email as required', () => {
-    // Arrange
     const emailControl = component.loginForm.get('email');
-
-    // Act
     emailControl?.setValue('');
-
-    // Assert
     expect(emailControl?.hasError('required')).toBeTrue();
   });
 
@@ -62,13 +56,8 @@ describe('Login', () => {
   });
 
   it('should validate password as required', () => {
-    // Arrange
     const passwordControl = component.loginForm.get('password');
-
-    // Act
     passwordControl?.setValue('');
-
-    // Assert
     expect(passwordControl?.hasError('required')).toBeTrue();
   });
 

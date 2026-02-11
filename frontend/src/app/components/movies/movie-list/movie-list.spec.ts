@@ -33,13 +33,11 @@ describe('MovieList', () => {
   });
 
   it('should initialize with empty movies array', () => {
-    // Assert
     expect(component.movies).toEqual([]);
     expect(component.movies.length).toBe(0);
   });
 
   it('should load movies on initialization', () => {
-    // Arrange
     const mockMovies = [
       {
         _id: '1',
@@ -79,7 +77,6 @@ describe('MovieList', () => {
 
   it('should delete movie and reload list on successful deletion', () => {
     spyOn(window, 'confirm').and.returnValue(true);
-
     const mockMovies = [
       {
         _id: '1',
@@ -90,14 +87,12 @@ describe('MovieList', () => {
         release_year: 2023,
       },
     ];
+
     movieService.delete.and.returnValue(of(undefined));
     movieService.getAll.and.returnValue(of(mockMovies));
 
-    // Act
     component.deleteMovie('1');
-    tick();
 
-    // Assert
     expect(movieService.delete).toHaveBeenCalledWith('1');
     expect(movieService.getAll).toHaveBeenCalled();
   });
@@ -105,11 +100,8 @@ describe('MovieList', () => {
   it('should not delete movie if user cancels confirmation', () => {
     spyOn(window, 'confirm').and.returnValue(false);
 
-    // Act
     component.deleteMovie('1');
-    tick();
 
-    // Assert
     expect(movieService.delete).not.toHaveBeenCalled();
   });
 
