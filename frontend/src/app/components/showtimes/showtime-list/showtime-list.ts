@@ -38,51 +38,43 @@ export class ShowtimeList {
   }
 
   deleteShowtime(id: string): void {
+    if (!window.confirm('¿Estás seguro? Esta acción no se puede deshacer')) {
+      return;
+    }
+
     Swal.fire({
-      title: '¿Estás seguro?',
-      text: 'Esta acción no se puede deshacer',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-    }).then((result) => {
-      if (!result.isConfirmed) return;
+      title: 'Eliminando...',
+      text: 'Por favor espera',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
 
-      Swal.fire({
-        title: 'Eliminando...',
-        text: 'Por favor espera',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
-      });
+    this.showtimeService.delete(id).subscribe({
+      next: () => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Eliminado',
+          text: 'El showtime fue eliminado correctamente',
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        this.loadShowtimes();
+      },
+      error: (error) => {
+        console.error(error);
+        this.errorMessage = 'Error deleting showtime';
 
-      this.showtimeService.delete(id).subscribe({
-        next: () => {
-          Swal.fire({
-            icon: 'success',
-            title: 'Eliminado',
-            text: 'El showtime fue eliminado correctamente',
-            timer: 1500,
-            showConfirmButton: false,
-          });
-          this.loadShowtimes();
-        },
-        error: (error) => {
-          console.error(error);
-
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text:
-              error?.error?.message ||
-              'Ocurrió un problema al eliminar el showtime. Intenta nuevamente.',
-          });
-        },
-      });
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text:
+            error?.error?.message ||
+            'Ocurrió un problema al eliminar el showtime. Intenta nuevamente.',
+        });
+      },
     });
   }
 

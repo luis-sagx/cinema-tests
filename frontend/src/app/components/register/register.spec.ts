@@ -16,10 +16,9 @@ describe('Register', () => {
       providers: [
         provideHttpClient(),
         provideRouter([]),
-        { provide: AuthService, useValue: authServiceSpy }
-      ]
-    })
-    .compileComponents();
+        { provide: AuthService, useValue: authServiceSpy },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(Register);
     component = fixture.componentInstance;

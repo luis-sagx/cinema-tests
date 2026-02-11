@@ -38,51 +38,44 @@ export class RoomList {
   }
 
   deleteRoom(id: string): void {
+    if (!window.confirm('¿Eliminar sala? Esta acción no se puede deshacer')) {
+      return;
+    }
+
     Swal.fire({
-      title: '¿Eliminar sala?',
-      text: 'Esta acción no se puede deshacer',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-    }).then((result) => {
-      if (!result.isConfirmed) return;
+      title: 'Eliminando sala...',
+      text: 'Por favor espera',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
 
-      Swal.fire({
-        title: 'Eliminando sala...',
-        text: 'Por favor espera',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
-      });
+    this.roomService.delete(id).subscribe({
+      next: () => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Sala eliminada',
+          text: 'La sala fue eliminada correctamente',
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        this.loadRooms();
+      },
+      error: (error) => {
+        console.error(error);
+        this.errorMessage =
+          'The room cannot be deleted because it is being used in one or more showtimes';
 
-      this.roomService.delete(id).subscribe({
-        next: () => {
-          Swal.fire({
-            icon: 'success',
-            title: 'Sala eliminada',
-            text: 'La sala fue eliminada correctamente',
-            timer: 1500,
-            showConfirmButton: false,
-          });
-          this.loadRooms();
-        },
-        error: (error) => {
-          console.error(error);
-
-          Swal.fire({
-            icon: 'error',
-            title: 'No se puede eliminar',
-            text:
-              error?.error?.message ||
-              'La sala no puede eliminarse porque está siendo utilizada en uno o más showtimes',
-          });
-        },
-      });
+        Swal.fire({
+          icon: 'error',
+          title: 'No se puede eliminar',
+          text:
+            error?.error?.message ||
+            'La sala no puede eliminarse porque está siendo utilizada en uno o más showtimes',
+        });
+      },
     });
   }
 
