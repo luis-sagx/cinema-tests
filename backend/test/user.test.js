@@ -2,10 +2,10 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 const app = require('./../src/app');
 const User = require('./../src/models/user.model');
-const { connectTestDB } = require('../src/config/setupDB');
+const { connectTestDB, closeTestDB } = require('../src/config/setupDB');
 
 // Aumentar timeout por si la conexión a la DB es lenta
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 beforeAll(async () => {
   await connectTestDB();
@@ -19,7 +19,7 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await User.deleteMany({});
-  await mongoose.connection.close();
+  await closeTestDB();
 });
 
 describe('User API – full test coverage', () => {
@@ -30,21 +30,26 @@ describe('User API – full test coverage', () => {
   describe('GET /api/users', () => {
     test('returns empty array initially', async () => {
       // Forzar limpieza local por si otros suites crean usuarios en paralelo
+      // Act
       const res = await request(app).get('/api/users');
 
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual([]);
     });
 
     test('does not expose passwords', async () => {
+      // Arrange
       await request(app).post('/api/users').send({
         name: 'Ana',
         email: 'ana@mail.com',
         password: 'secret123'
       });
 
+      // Act
       const res = await request(app).get('/api/users');
 
+      // Assert
       expect(res.statusCode).toBe(200);
       res.body.forEach(user => {
         expect(user).not.toHaveProperty('password');
@@ -57,12 +62,17 @@ describe('User API – full test coverage', () => {
   ============================ */
   describe('POST /api/users', () => {
     test('creates user successfully', async () => {
-      const res = await request(app).post('/api/users').send({
+      // Arrange
+      const userData = {
         name: 'Luis',
         email: 'luis@mail.com',
         password: 'secret123'
-      });
+      };
 
+      // Act
+      const res = await request(app).post('/api/users').send(userData);
+
+      // Assert
       expect(res.statusCode).toBe(201);
       expect(res.body).toMatchObject({
         name: 'Luis',
@@ -73,25 +83,30 @@ describe('User API – full test coverage', () => {
     });
 
     test('fails with missing fields', async () => {
+      // Act
       const res = await request(app).post('/api/users').send({});
 
+      // Assert
       expect(res.statusCode).toBe(400);
       expect(res.body).toHaveProperty('message');
     });
 
     test('fails with duplicate email', async () => {
+      // Arrange
       await request(app).post('/api/users').send({
         name: 'A',
         email: 'dup@mail.com',
         password: 'secret123'
       });
 
+      // Act
       const res = await request(app).post('/api/users').send({
         name: 'B',
         email: 'dup@mail.com',
         password: 'secret123'
       });
 
+      // Assert
       expect(res.statusCode).toBe(400);
       expect(res.body.message).toBe('Email already exists');
     });
@@ -158,12 +173,17 @@ describe('User API – full test coverage', () => {
   ============================ */
   describe('POST /api/users/register', () => {
     test('registers user and returns token', async () => {
-      const res = await request(app).post('/api/users/register').send({
+      // Arrange
+      const userData = {
         name: 'Alba',
         email: 'alba@mail.com',
         password: 'secret123'
-      });
+      };
 
+      // Act
+      const res = await request(app).post('/api/users/register').send(userData);
+
+      // Assert
       expect(res.statusCode).toBe(201);
       expect(res.body).toHaveProperty('token');
       expect(res.body.user).toMatchObject({
@@ -276,11 +296,13 @@ describe('User API – full test coverage', () => {
     });
 
     test('logs in successfully', async () => {
+      // Act
       const res = await request(app).post('/api/users/login').send({
         email: 'login@mail.com',
         password: 'secret123'
       });
 
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('token');
       expect(res.body.user.email).toBe('login@mail.com');
@@ -333,14 +355,17 @@ describe('User API – full test coverage', () => {
   ============================ */
   describe('GET /api/users/:id', () => {
     test('returns a user', async () => {
+      // Arrange
       const create = await request(app).post('/api/users').send({
         name: 'Maria',
         email: 'maria@mail.com',
         password: 'secret123'
       });
 
+      // Act
       const res = await request(app).get(`/api/users/${create.body.id}`);
 
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body.email).toBe('maria@mail.com');
       expect(res.body).not.toHaveProperty('password');
@@ -380,22 +405,26 @@ describe('User API – full test coverage', () => {
   ============================ */
   describe('PUT /api/users/:id', () => {
     test('updates user successfully', async () => {
+      // Arrange
       const create = await request(app).post('/api/users').send({
         name: 'Old',
         email: 'old@mail.com',
         password: 'secret123'
       });
 
+      // Act
       const res = await request(app)
         .put(`/api/users/${create.body.id}`)
         .send({ name: 'New', email: 'new@mail.com' });
 
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body.name).toBe('New');
       expect(res.body.email).toBe('new@mail.com');
     });
 
     test('rejects duplicate email', async () => {
+      // Arrange
       await request(app).post('/api/users').send({
         name: 'A',
         email: 'a@mail.com',
@@ -408,21 +437,25 @@ describe('User API – full test coverage', () => {
         password: 'secret123'
       });
 
+      // Act
       const res = await request(app)
         .put(`/api/users/${b.body.id}`)
         .send({ name: 'B', email: 'a@mail.com' });
 
+      // Assert
       expect(res.statusCode).toBe(400);
       expect(res.body.message).toBe('Email already exists');
     });
 
     test('rejects short password on update', async () => {
+      // Arrange
       const create = await request(app).post('/api/users').send({
         name: 'Test',
         email: 'test@mail.com',
         password: 'secret123'
       });
 
+      // Act
       const res = await request(app)
         .put(`/api/users/${create.body.id}`)
         .send({
@@ -431,57 +464,72 @@ describe('User API – full test coverage', () => {
           password: '123'
         });
 
+      // Assert
       expect(res.statusCode).toBe(400);
       expect(res.body.message).toBe('Password must be at least 6 characters');
     });
 
     test('rejects missing name/email', async () => {
+      // Arrange
       const create = await request(app).post('/api/users').send({
         name: 'Need', email: 'need@mail.com', password: 'secret123'
       });
 
+      // Act
       const res = await request(app)
         .put(`/api/users/${create.body.id}`)
         .send({ name: '', email: '' });
 
+      // Assert
       expect(res.statusCode).toBe(400);
       expect(res.body.message).toBe('Name and email are required');
     });
 
     test('updates password and hits hashing branch', async () => {
+      // Arrange
       const create = await request(app).post('/api/users').send({
         name: 'Pwd', email: 'pwd@mail.com', password: 'secret123'
       });
 
+      // Act
       const res = await request(app)
         .put(`/api/users/${create.body.id}`)
         .send({ name: 'Pwd', email: 'pwd@mail.com', password: 'newsecret' });
 
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body).not.toHaveProperty('password');
     });
 
     test('returns 404 when updating non-existing user', async () => {
+      // Arrange
       const id = new mongoose.Types.ObjectId();
+      // Act
       const res = await request(app).put(`/api/users/${id}`).send({ name: 'X', email: 'x@mail.com' });
+      // Assert
       expect(res.statusCode).toBe(404);
       expect(res.body.message).toBe('User not found');
     });
 
     test('returns 404 for invalid id format (CastError)', async () => {
+      // Act
       const res = await request(app).put('/api/users/invalid-id').send({ name: 'X', email: 'x@mail.com' });
+      // Assert
       expect(res.statusCode).toBe(404);
       expect(res.body.message).toBe('User not found');
     });
 
     test('handles ValidationError thrown from findByIdAndUpdate', async () => {
+      // Arrange
       const err = Object.assign(new Error('v'), { name: 'ValidationError', errors: { email: { message: 'Invalid' } } });
       const selectSpy = jest.fn().mockRejectedValueOnce(err);
       const spy = jest.spyOn(User, 'findByIdAndUpdate').mockReturnValue({ select: selectSpy });
 
       try {
         const id = new mongoose.Types.ObjectId();
+        // Act
         const res = await request(app).put(`/api/users/${id}`).send({ name: 'X', email: 'x@mail.com' });
+        // Assert
         expect(res.statusCode).toBe(400);
         expect(res.body.message).toBe('Invalid');
       } finally {
@@ -490,13 +538,16 @@ describe('User API – full test coverage', () => {
     });
 
     test('handles duplicate key thrown from findByIdAndUpdate', async () => {
+      // Arrange
       const err = Object.assign(new Error('dup'), { code: 11000 });
       const selectSpy = jest.fn().mockRejectedValueOnce(err);
       const spy = jest.spyOn(User, 'findByIdAndUpdate').mockReturnValue({ select: selectSpy });
 
       try {
         const id = new mongoose.Types.ObjectId();
+        // Act
         const res = await request(app).put(`/api/users/${id}`).send({ name: 'X', email: 'x@mail.com' });
+        // Assert
         expect(res.statusCode).toBe(400);
         expect(res.body.message).toBe('Email already exists');
       } finally {
@@ -505,12 +556,15 @@ describe('User API – full test coverage', () => {
     });
 
     test('handles unexpected error during update and returns 500', async () => {
+      // Arrange
       const selectSpy = jest.fn().mockRejectedValueOnce(new Error('boom'));
       const spy = jest.spyOn(User, 'findByIdAndUpdate').mockReturnValue({ select: selectSpy });
 
       try {
         const id = new mongoose.Types.ObjectId();
+        // Act
         const res = await request(app).put(`/api/users/${id}`).send({ name: 'X', email: 'x@mail.com' });
+        // Assert
         expect(res.statusCode).toBe(500);
         expect(res.body).toHaveProperty('message');
       } finally {
@@ -525,13 +579,17 @@ describe('User API – full test coverage', () => {
   ============================ */
   describe('DELETE /api/users/:id', () => {
     test('deletes user successfully', async () => {
+      // Arrange
       const create = await request(app).post('/api/users').send({
         name: 'Delete',
         email: 'delete@mail.com',
         password: 'secret123'
       });
 
+      // Act
       const res = await request(app).delete(`/api/users/${create.body.id}`);
+
+      // Assert
       expect(res.statusCode).toBe(204);
 
       const get = await request(app).get(`/api/users/${create.body.id}`);
@@ -539,7 +597,9 @@ describe('User API – full test coverage', () => {
     });
 
     test('returns 404 for invalid id', async () => {
+      // Act
       const res = await request(app).delete('/api/users/invalid-id');
+      // Assert
       expect(res.statusCode).toBe(404);
     });
 
@@ -569,7 +629,7 @@ describe('User API – full test coverage', () => {
   ============================ */
   test('handles database errors and returns 500', async () => {
     const spy = jest.spyOn(User, 'find').mockReturnValue({
-        select: jest.fn().mockRejectedValue(new Error('DB error'))
+      select: jest.fn().mockRejectedValue(new Error('DB error'))
     });
 
     try {

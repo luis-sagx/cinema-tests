@@ -33,11 +33,13 @@ describe('RoomList', () => {
   });
 
   it('should initialize with empty rooms array', () => {
+    // Assert
     expect(component.rooms).toEqual([]);
     expect(component.rooms.length).toBe(0);
   });
 
   it('should load rooms on initialization', () => {
+    // Arrange
     const mockRooms = [
       { _id: '1', name: 'Room 1', capacity: 100, type: '2D' as const },
       { _id: '2', name: 'Room 2', capacity: 50, type: '3D' as const },
@@ -53,6 +55,7 @@ describe('RoomList', () => {
   });
 
   it('should return correct CSS class for room types', () => {
+    // Assert
     expect(component.getTypeClass('2D')).toContain('bg-cyan-neon');
     expect(component.getTypeClass('3D')).toContain('bg-purple-neon');
     expect(component.getTypeClass('VIP')).toContain('bg-gold');
@@ -65,6 +68,7 @@ describe('RoomList', () => {
     roomService.delete.and.returnValue(of(undefined));
     roomService.getAll.and.returnValue(of(mockRooms));
 
+    // Act
     component.deleteRoom('1');
 
     expect(roomService.delete).toHaveBeenCalledWith('1');

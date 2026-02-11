@@ -5,7 +5,10 @@ const Room = require('../src/models/room.model');
 const Showtime = require('../src/models/showtime.model');
 const User = require('../src/models/user.model');
 const jwt = require('jsonwebtoken');
-const { connectTestDB } = require('../src/config/setupDB');
+const { connectTestDB, closeTestDB } = require('../src/config/setupDB');
+
+// Aumentar timeout por si la conexión a la DB es lenta
+jest.setTimeout(60000);
 
 let token;
 let user;
@@ -40,7 +43,7 @@ afterEach(() => {
 afterAll(async () => {
   await Room.deleteMany({});
   await Showtime.deleteMany({});
-  await mongoose.connection.close();
+  await closeTestDB();
 });
 
 // Helper para requests autenticadas
@@ -51,15 +54,23 @@ describe('Room API – full test coverage', () => {
   // ================= GET /api/rooms =================
   describe('GET /api/rooms', () => {
     test('returns an empty list initially', async () => {
+      // Act
       const res = await authRequest(request(app).get('/api/rooms'));
+
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBe(0);
     });
 
     test('returns a list of rooms', async () => {
+      // Arrange
       await Room.create({ name: 'Room A', capacity: 50, type: '2D', user_id: user._id });
+
+      // Act
       const res = await authRequest(request(app).get('/api/rooms'));
+
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body.length).toBe(1);
       expect(res.body[0].name).toBe('Room A');
@@ -76,12 +87,18 @@ describe('Room API – full test coverage', () => {
   // ================= POST /api/rooms =================
   describe('POST /api/rooms', () => {
     test('creates a room successfully', async () => {
-      const res = await authRequest(request(app).post('/api/rooms').send({
+      // Arrange
+      const roomData = {
         name: 'Main Room',
         capacity: 100,
         type: '3D',
         user_id: user._id,
-      }));
+      };
+
+      // Act
+      const res = await authRequest(request(app).post('/api/rooms').send(roomData));
+
+      // Assert
       expect(res.statusCode).toBe(201);
       expect(res.body).toHaveProperty('_id');
       expect(res.body.name).toBe('Main Room');
@@ -174,8 +191,13 @@ describe('Room API – full test coverage', () => {
   // ================= GET /api/rooms/:id =================
   describe('GET /api/rooms/:id', () => {
     test('returns a room by ID', async () => {
+      // Arrange
       const room = await Room.create({ name: 'Room GET', capacity: 60, type: 'VIP', user_id: user._id });
+
+      // Act
       const res = await authRequest(request(app).get(`/api/rooms/${room._id}`));
+
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body.name).toBe('Room GET');
     });
@@ -205,11 +227,17 @@ describe('Room API – full test coverage', () => {
   // ================= PUT /api/rooms/:id =================
   describe('PUT /api/rooms/:id', () => {
     test('updates a room successfully', async () => {
+      // Arrange
       const room = await Room.create({ name: 'Old Room', capacity: 40, type: '2D', user_id: user._id });
-      const res = await authRequest(request(app).put(`/api/rooms/${room._id}`).send({
+      const updateData = {
         name: 'Updated Room',
         capacity: 45,
-      }));
+      };
+
+      // Act
+      const res = await authRequest(request(app).put(`/api/rooms/${room._id}`).send(updateData));
+
+      // Assert
       expect(res.statusCode).toBe(200);
       expect(res.body.name).toBe('Updated Room');
       expect(res.body.capacity).toBe(45);
@@ -254,8 +282,13 @@ describe('Room API – full test coverage', () => {
   // ================= DELETE /api/rooms/:id =================
   describe('DELETE /api/rooms/:id', () => {
     test('deletes a room successfully', async () => {
+      // Arrange
       const room = await Room.create({ name: 'Delete Room', capacity: 50, type: '3D', user_id: user._id });
+
+      // Act
       const res = await authRequest(request(app).delete(`/api/rooms/${room._id}`));
+
+      // Assert
       expect(res.statusCode).toBe(200);
     });
 

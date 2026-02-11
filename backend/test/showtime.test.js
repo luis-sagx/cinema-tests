@@ -7,7 +7,10 @@ const Movie = require('../src/models/movie.model');
 const Room = require('../src/models/room.model');
 const Showtime = require('../src/models/showtime.model');
 const User = require('../src/models/user.model');
-const { connectTestDB } = require('../src/config/setupDB');
+const { connectTestDB, closeTestDB } = require('../src/config/setupDB');
+
+// Aumentar timeout por si la conexión a la DB es lenta
+jest.setTimeout(60000);
 
 let token;
 let user;
@@ -43,7 +46,7 @@ afterAll(async () => {
   await Movie.deleteMany({});
   await Room.deleteMany({});
   await Showtime.deleteMany({});
-  await mongoose.connection.close();
+  await closeTestDB();
 });
 
 describe('Showtime API (JWT protected)', () => {
@@ -53,6 +56,7 @@ describe('Showtime API (JWT protected)', () => {
   ========================== */
 
   test('POST /api/showtimes creates a showtime', async () => {
+    // Arrange
     const movie = await Movie.create({
       title: 'Movie',
       duration: 120,
@@ -66,17 +70,20 @@ describe('Showtime API (JWT protected)', () => {
       type: '2D',
       user_id: user._id
     });
+    const showtimeData = {
+      movie_id: movie._id,
+      room_id: room._id,
+      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+    };
 
+    // Act
     const res = await request(app)
       .post('/api/showtimes')
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        movie_id: movie._id,
-        room_id: room._id,
-        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      });
+      .send(showtimeData);
 
+    // Assert
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty('_id');
     expect(res.body.movie_id).toBe(movie._id.toString());
@@ -107,6 +114,7 @@ describe('Showtime API (JWT protected)', () => {
   });
 
   test('POST fails with past start_time', async () => {
+    // Arrange
     const movie = await Movie.create({
       title: 'Movie',
       duration: 120,
@@ -120,17 +128,20 @@ describe('Showtime API (JWT protected)', () => {
       type: '2D',
       user_id: user._id
     });
+    const invalidData = {
+      movie_id: movie._id,
+      room_id: room._id,
+      start_time: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+    };
 
+    // Act
     const res = await request(app)
       .post('/api/showtimes')
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        movie_id: movie._id,
-        room_id: room._id,
-        start_time: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      });
+      .send(invalidData);
 
+    // Assert
     expect(res.statusCode).toBe(400);
     expect(res.body.message).toBe('Start date must be today or in the future');
   });
@@ -140,6 +151,7 @@ describe('Showtime API (JWT protected)', () => {
   ========================== */
 
   test('GET /api/showtimes returns user showtimes', async () => {
+    // Arrange
     const movie = await Movie.create({
       title: 'Movie',
       duration: 120,
@@ -164,46 +176,41 @@ describe('Showtime API (JWT protected)', () => {
         end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
       });
 
+    // Act
     const res = await request(app)
       .get('/api/showtimes')
       .set('Authorization', `Bearer ${token}`);
 
+    // Assert
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBe(1);
   });
 
-  test('GET /api/showtimes/:id returns showtime', async () => {
-    const movie = await Movie.create({
-      title: 'Movie',
-      duration: 120,
-      release_year: 2024,
-      user_id: user._id
+  describe('GET /api/showtimes/:id', () => {
+    test('returns showtime', async () => {
+      // Arrange
+      const movie = await Movie.create({ title: 'Movie', duration: 120, release_year: 2024, user_id: user._id });
+      const room = await Room.create({ name: 'Room', capacity: 50, type: '2D', user_id: user._id });
+      const createRes = await request(app)
+        .post('/api/showtimes')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          movie_id: movie._id,
+          room_id: room._id,
+          start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+        });
+
+      // Act
+      const res = await request(app)
+        .get(`/api/showtimes/${createRes.body._id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      // Assert
+      expect(res.statusCode).toBe(200);
+      expect(res.body._id).toBe(createRes.body._id);
     });
-
-    const room = await Room.create({
-      name: 'Room',
-      capacity: 50,
-      type: '2D',
-      user_id: user._id
-    });
-
-    const createRes = await request(app)
-      .post('/api/showtimes')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movie_id: movie._id,
-        room_id: room._id,
-        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      });
-
-    const res = await request(app)
-      .get(`/api/showtimes/${createRes.body._id}`)
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body._id).toBe(createRes.body._id);
   });
 
   /* =========================
@@ -211,6 +218,7 @@ describe('Showtime API (JWT protected)', () => {
   ========================== */
 
   test('PUT /api/showtimes/:id updates showtime', async () => {
+    // Arrange
     const movie = await Movie.create({
       title: 'Movie',
       duration: 120,
@@ -225,7 +233,6 @@ describe('Showtime API (JWT protected)', () => {
       user_id: user._id,
     });
 
-    // Crear el showtime
     const createRes = await request(app)
       .post('/api/showtimes')
       .set('Authorization', `Bearer ${token}`)
@@ -236,21 +243,20 @@ describe('Showtime API (JWT protected)', () => {
         end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),  // Dos días después
       });
 
-    // Intentamos actualizar el showtime con una nueva fecha de inicio
     const newStartTime = new Date(Date.now() + 72 * 60 * 60 * 1000); // Tres días después
+    const updateData = {
+      start_time: newStartTime,  // Actualizando la fecha
+      end_time: new Date(newStartTime.getTime() + (movie.duration * 60 * 1000))
+    };
 
+    // Act
     const res = await request(app)
       .put(`/api/showtimes/${createRes.body._id}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        start_time: newStartTime,  // Actualizando la fecha
-        end_time: new Date(newStartTime.getTime() + (movie.duration * 60 * 1000)) 
-      });
+      .send(updateData);
 
-    // Verificamos que la respuesta sea 200
+    // Assert
     expect(res.statusCode).toBe(200);
-
-    // Verificamos que el showtime se haya actualizado correctamente
     expect(res.body._id).toBe(createRes.body._id);
   });
 
@@ -259,62 +265,60 @@ describe('Showtime API (JWT protected)', () => {
      DELETE
   ========================== */
 
-  test('DELETE /api/showtimes/:id deletes showtime', async () => {
-    const movie = await Movie.create({
-      title: 'Movie',
-      duration: 120,
-      release_year: 2024,
-      user_id: user._id
+  describe('DELETE /api/showtimes/:id', () => {
+    test('deletes showtime', async () => {
+      // Arrange
+      const movie = await Movie.create({ title: 'Movie', duration: 120, release_year: 2024, user_id: user._id });
+      const room = await Room.create({ name: 'Room', capacity: 50, type: '2D', user_id: user._id });
+      const createRes = await request(app)
+        .post('/api/showtimes')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          movie_id: movie._id,
+          room_id: room._id,
+          start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
+        });
+
+      // Act
+      const res = await request(app)
+        .delete(`/api/showtimes/${createRes.body._id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      // Assert
+      expect(res.statusCode).toBe(200);
+      expect(res.body.message).toBe('Showtime deleted successfully');
     });
-
-    const room = await Room.create({
-      name: 'Room',
-      capacity: 50,
-      type: '2D',
-      user_id: user._id
-    });
-
-    const createRes = await request(app)
-      .post('/api/showtimes')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        movie_id: movie._id,
-        room_id: room._id,
-        start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      });
-
-    const res = await request(app)
-      .delete(`/api/showtimes/${createRes.body._id}`)
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toBe('Showtime deleted successfully');
   });
 
   test('POST fails with non-existent room', async () => {
+    // Arrange
     const movie = await Movie.create({
       title: 'Movie',
       duration: 120,
       release_year: 2024,
       user_id: user._id
     });
+    const invalidRoomId = new mongoose.Types.ObjectId();
 
+    // Act
     const res = await request(app)
       .post('/api/showtimes')
       .set('Authorization', `Bearer ${token}`)
       .send({
         movie_id: movie._id,
-        room_id: new mongoose.Types.ObjectId(),
+        room_id: invalidRoomId,
         start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end_time: new Date(Date.now() + 48 * 60 * 60 * 1000),
       });
 
+    // Assert
     expect(res.statusCode).toBe(400);
     expect(res.body.message).toBe('Room does not exist');
   });
 
   test('POST fails when end_time is before start_time', async () => {
+    // Arrange
     const movie = await Movie.create({
       title: 'Movie',
       duration: 120,
@@ -328,23 +332,27 @@ describe('Showtime API (JWT protected)', () => {
       type: '2D',
       user_id: user._id
     });
+    const invalidDates = {
+      movie_id: movie._id,
+      room_id: room._id,
+      // start after end
+      start_time: new Date(Date.now() + 72 * 60 * 60 * 1000),
+      end_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    };
 
+    // Act
     const res = await request(app)
       .post('/api/showtimes')
       .set('Authorization', `Bearer ${token}`)
-      .send({
-        movie_id: movie._id,
-        room_id: room._id,
-        // start after end
-        start_time: new Date(Date.now() + 72 * 60 * 60 * 1000),
-        end_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      });
+      .send(invalidDates);
 
+    // Assert
     expect(res.statusCode).toBe(400);
     expect(res.body.message).toBe('End date must be greater than or equal to start date');
   });
 
   test('POST fails with overlapping showtime', async () => {
+    // Arrange
     const movie = await Movie.create({
       title: 'Movie',
       duration: 120,

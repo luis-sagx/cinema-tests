@@ -33,11 +33,13 @@ describe('ShowtimeList', () => {
   });
 
   it('should initialize with empty showtimes array', () => {
+    // Assert
     expect(component.showtimes).toEqual([]);
     expect(component.showtimes.length).toBe(0);
   });
 
   it('should load showtimes on initialization', () => {
+    // Arrange
     const mockShowtimes = [
       {
         _id: '1',
@@ -65,7 +67,10 @@ describe('ShowtimeList', () => {
   });
 
   it('should format date correctly', () => {
+    // Arrange
     const testDate = new Date('2024-12-24T14:00');
+
+    // Act
     const formatted = component.formatDate(testDate);
 
     expect(formatted).toBeDefined();
@@ -73,6 +78,7 @@ describe('ShowtimeList', () => {
   });
 
   it('should get movie title from showtime object', () => {
+    // Arrange
     const mockShowtime = {
       _id: '1',
       movie_id: {
@@ -89,6 +95,8 @@ describe('ShowtimeList', () => {
     };
 
     const title = component.getMovieTitle(mockShowtime);
+
+    // Assert
     expect(title).toBe('Inception');
   });
 
@@ -110,11 +118,12 @@ describe('ShowtimeList', () => {
         end_time: new Date('2024-12-24T16:00'),
       },
     ];
-
     showtimeService.delete.and.returnValue(of(undefined));
     showtimeService.getAll.and.returnValue(of(mockShowtimes));
 
+    // Act
     component.deleteShowtime('1');
+    tick();
 
     expect(showtimeService.delete).toHaveBeenCalledWith('1');
     expect(showtimeService.getAll).toHaveBeenCalled();
