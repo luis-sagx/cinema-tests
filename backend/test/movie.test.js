@@ -39,8 +39,7 @@ afterEach(() => {
 // Después de todos los tests
 afterAll(async () => {
   await Movie.deleteMany({});
-  await mongoose.connection.close();
-  Movie.findOne = originalFindOne;
+  await closeTestDB();
 });
 
 describe('Movie API – full test coverage', () => {
