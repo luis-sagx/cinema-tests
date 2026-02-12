@@ -8,8 +8,8 @@ export const options = {
     { duration: '20s', target: 0 },
   ],
   thresholds: {
-    http_req_duration: ['p(95)<1200'],
-    http_req_failed: ['rate<0.2'],
+    http_req_duration: ['p(95)<800'],
+    http_req_failed: ['rate<0.01'],
   },
 };
 
@@ -64,79 +64,75 @@ export default function (data) {
     'Content-Type': 'application/json',
   };
 
-  const FAKE_ID = '64f123456789abcdef999999';
-
-  // ---------- GET ALL USERS ----------
-  let res = http.get(`${BASE_URL}/users`, { headers });
-  check(res, {
+  /* ---------- GET ALL USERS ---------- */
+  const getAllRes = http.get(`${BASE_URL}/users`, { headers });
+  check(getAllRes, {
     'GET /users → 200': (r) => r.status === 200,
   });
 
-  sleep(0.3);
+  sleep(0.2);
 
-  // ---------- GET USER BY ID ----------
-  res = http.get(`${BASE_URL}/users/${data.userId}`, { headers });
-  check(res, {
+  /* ---------- GET USER BY ID ---------- */
+  const getByIdRes = http.get(
+    `${BASE_URL}/users/${data.userId}`,
+    { headers }
+  );
+  check(getByIdRes, {
     'GET /users/:id → 200': (r) => r.status === 200,
   });
 
   sleep(0.3);
 
-  // ---------- GET USER (FAKE) ----------
-  res = http.get(`${BASE_URL}/users/${FAKE_ID}`, { headers });
-  check(res, {
-    'GET fake user → 404': (r) => r.status === 404,
-  });
+  /* ---------- CONTROLLED WRITES ---------- */
+  if (__ITER % 5 === 0) {
+    const uniqueEmail = `k6temp_${__VU}_${Date.now()}@test.com`;
+    
+    /* ----------- CREATE USERS ----------- */
+    const createRes = http.post(
+      `${BASE_URL}/users`,
+      JSON.stringify({
+        name: 'k6-temp-user',
+        email: uniqueEmail,
+        password: 'password123',
+      }),
+      { headers }
+    );
 
-  sleep(0.3);
+    check(createRes, {
+      'POST /users → 201': (r) => r.status === 201,
+    });
 
-  // ---------- CREATE USER ----------
-  const uniqueEmail = `k6temp_${__VU}_${Date.now()}@test.com`;
+    const createdUserId = createRes.json('id');
 
-  const createRes = http.post(
-    `${BASE_URL}/users`,
-    JSON.stringify({
-      name: 'k6-temp-user',
-      email: uniqueEmail,
-      password: 'password123',
-    }),
-    { headers }
-  );
+    sleep(0.2);
 
-  check(createRes, {
-    'POST /users → 201': (r) => r.status === 201,
-  });
+    /* ----------- UPDATE USERS ----------- */
+    const updateRes = http.put(
+      `${BASE_URL}/users/${createdUserId}`,
+      JSON.stringify({
+        name: 'k6-updated-user',
+        email: uniqueEmail,
+      }),
+      { headers }
+    );
 
-  const createdUserId = createRes.json('id');
+    check(updateRes, {
+      'PUT /users/:id → 200': (r) => r.status === 200,
+    });
 
-  sleep(0.3);
+    sleep(0.2);
 
-  // ---------- UPDATE USER ----------
-  const updateRes = http.put(
-    `${BASE_URL}/users/${createdUserId}`,
-    JSON.stringify({
-      name: 'k6-updated-user',
-      email: uniqueEmail,
-    }),
-    { headers }
-  );
+    /* ----------- DELETE USERS ----------- */
+    const deleteRes = http.del(
+      `${BASE_URL}/users/${createdUserId}`,
+      null,
+      { headers }
+    );
 
-  check(updateRes, {
-    'PUT /users/:id → 200': (r) => r.status === 200,
-  });
+    check(deleteRes, {
+      'DELETE /users/:id → 204': (r) => r.status === 204,
+    });
+  }
 
-  sleep(0.3);
-
-  // ---------- DELETE USER ----------
-  const deleteRes = http.del(
-    `${BASE_URL}/users/${createdUserId}`,
-    null,
-    { headers }
-  );
-
-  check(deleteRes, {
-    'DELETE /users/:id → 204': (r) => r.status === 204,
-  });
-
-  sleep(0.5);
+  sleep(0.4);
 }

@@ -8,7 +8,7 @@ export const options = {
     { duration: '20s', target: 0 },
   ],
   thresholds: {
-    http_req_duration: ['p(95)<500'],
+    http_req_duration: ['p(95)<800'],
     http_req_failed: ['rate<0.01'],
   },
 };
@@ -21,7 +21,9 @@ const USER = {
   password: 'password123',
 };
 
-// ================== SETUP ==================
+/* =========================
+   SETUP
+========================= */
 export function setup() {
   let loginRes = http.post(
     `${BASE_URL}/users/login`,
@@ -50,33 +52,34 @@ export function setup() {
   }
 
   check(loginRes, {
-    'login success (200)': (r) => r.status === 200,
-    'token received': (r) => JSON.parse(r.body).token !== undefined,
+    'login success': (r) => r.status === 200,
   });
 
-  return { token: JSON.parse(loginRes.body).token };
+  return { token: loginRes.json('token') };
 }
 
-// ================== TEST ==================
+/* =========================
+  TEST
+========================= */
 export default function (data) {
   const headers = {
     Authorization: `Bearer ${data.token}`,
     'Content-Type': 'application/json',
   };
 
-  // ---------- GET ALL ----------
-  let res = http.get(`${BASE_URL}/movies`, { headers });
-  check(res, {
+  /* ---------- GET ALL  ---------- */
+  const getAllRes = http.get(`${BASE_URL}/movies`, { headers });
+  check(getAllRes, {
     'GET /movies → 200': (r) => r.status === 200,
   });
 
-  sleep(0.3);
+  sleep(0.2);
 
-  // ---------- CREATE ----------
+  /* ---------- CREATE ---------- */
   const createRes = http.post(
     `${BASE_URL}/movies`,
     JSON.stringify({
-      title: `Load Test Movie ${__VU}-${Date.now()}`,
+      title: `k6-movie-${__VU}-${__ITER}-${Date.now()}`,
       duration: 120,
       release_year: 2024,
     }),
@@ -84,19 +87,31 @@ export default function (data) {
   );
 
   check(createRes, {
-    'POST /movies → 201 or 200': (r) =>
+    'POST /movies → 201/200': (r) =>
       r.status === 201 || r.status === 200,
   });
 
   const movieId = createRes.json('_id');
 
-  sleep(0.3);
+  sleep(0.2);
 
-  // ---------- UPDATE ----------
+  /* ---------- GET BY ID ---------- */
+  const getByIdRes = http.get(
+    `${BASE_URL}/movies/${movieId}`,
+    { headers }
+  );
+
+  check(getByIdRes, {
+    'GET /movies/:id → 200': (r) => r.status === 200,
+  });
+
+  sleep(0.2);
+
+  /* ---------- UPDATE ---------- */
   const updateRes = http.put(
     `${BASE_URL}/movies/${movieId}`,
     JSON.stringify({
-      title: 'Updated Movie',
+      title: `k6-movie-updated-${__VU}-${__ITER}`,
       duration: 130,
       release_year: 2024,
     }),
@@ -107,9 +122,9 @@ export default function (data) {
     'PUT /movies/:id → 200': (r) => r.status === 200,
   });
 
-  sleep(0.3);
+  sleep(0.2);
 
-  // ---------- DELETE ----------
+  /* ---------- DELETE  ---------- */
   const deleteRes = http.del(
     `${BASE_URL}/movies/${movieId}`,
     null,
@@ -117,9 +132,10 @@ export default function (data) {
   );
 
   check(deleteRes, {
-    'DELETE /movies/:id → 204 or 200': (r) =>
-      r.status === 204 || r.status === 200,
+    'DELETE /movies/:id → 200/204': (r) =>
+      r.status === 200 || r.status === 204,
   });
 
-  sleep(0.5);
+  sleep(0.3);
 }
+

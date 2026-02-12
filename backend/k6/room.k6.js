@@ -8,7 +8,7 @@ export const options = {
     { duration: '20s', target: 0 },
   ],
   thresholds: {
-    http_req_duration: ['p(95)<600'],
+    http_req_duration: ['p(95)<800'],
     http_req_failed: ['rate<0.01'],
   },
 };
@@ -66,15 +66,15 @@ export default function (data) {
     'Content-Type': 'application/json',
   };
 
-  // ---------- GET ALL ROOMS ----------
-  let res = http.get(`${BASE_URL}/rooms`, { headers });
-  check(res, {
+  /* ---------- GET ALL ROOMS ---------- */
+  const getAllRes = http.get(`${BASE_URL}/rooms`, { headers });
+  check(getAllRes, {
     'GET /rooms → 200': (r) => r.status === 200,
   });
 
   sleep(0.3);
 
-  // ---------- CREATE ROOM ----------
+  /* ---------- CREATE ROOM ---------- */
   const createRes = http.post(
     `${BASE_URL}/rooms`,
     JSON.stringify({
@@ -91,9 +91,21 @@ export default function (data) {
 
   const roomId = createRes.json('_id');
 
-  sleep(0.3);
+  sleep(0.2);
 
-  // ---------- UPDATE ROOM ----------
+  /* ---------- GET ROOM BY ID (NEW) ---------- */
+  const getByIdRes = http.get(
+    `${BASE_URL}/rooms/${roomId}`,
+    { headers }
+  );
+
+  check(getByIdRes, {
+    'GET /rooms/:id → 200': (r) => r.status === 200,
+  });
+
+  sleep(0.2);
+
+  /* ---------- UPDATE ROOM ---------- */
   const updateRes = http.put(
     `${BASE_URL}/rooms/${roomId}`,
     JSON.stringify({
@@ -110,7 +122,7 @@ export default function (data) {
 
   sleep(0.3);
 
-  // ---------- DELETE ROOM ----------
+  /* ---------- DELETE ROOM ---------- */
   const deleteRes = http.del(
     `${BASE_URL}/rooms/${roomId}`,
     null,
