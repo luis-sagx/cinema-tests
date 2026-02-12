@@ -76,10 +76,10 @@ jobs:
 
       - name: Run k6 load tests (non-blocking)
         run: |
-          k6 run movies.k6.js || true
-          k6 run rooms.k6.js || true
-          k6 run showtimes.k6.js || true
-          k6 run users.k6.js || true
+          k6 run k6/movies.k6.js || true
+          k6 run k6/rooms.k6.js || true
+          k6 run k6/showtimes.k6.js || true
+          k6 run k6/users.k6.js || true
 
   deploy:
     name: Deploy
